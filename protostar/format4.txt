@@ -6,7 +6,7 @@
 #   08049718 R_386_JUMP_SLOT   _exit
 #   08049724 R_386_JUMP_SLOT   exit
 
-# so we need to redirect to the GOT of exit()
+# so we need to redirect to the GOT entry for exit()
 
 
 # addresses of adjacent bytes, writing 2 at a time (got, got2 below)

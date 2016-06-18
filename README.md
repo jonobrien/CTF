@@ -1,6 +1,6 @@
-# EE_CTF
-embedded adventures - scripted in python, exploiting c binaries
+# CTF
+A variety of challenges completed in various environments from basics to some more advanced techniques to gain control of a system, etc.
 
-[exploit-exercises](http://exploit-exercises.com)
-
-Contains basic challenges from basic stack overflows with no protections up to full applications with more modern protections.
+- [backdoor ctf](https://backdoor.sdslabs.co)
+- [microcorruption](https://microcorruption.com)
+- [exploit-exercises](http://exploit-exercises.com)

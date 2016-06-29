@@ -21,10 +21,19 @@ $ cat spaces\ in\ this\ filename
 ```
 
 ## level 3
-ssh into bandit3 and open the `.hidden` file in the inhere directory
+ssh into bandit3 and open the `.hidden` file in the `inhere` directory
 ```bash
 $ cat .hidden
 ```
+
+## level 4
+ssh into bandit4 and open the only human-readable file in the `inhere` directory
+```bash
+$ file ./-*
+$ cat ./-<human-readable-file>
+```
+
+## level
 
 
 ## level

@@ -8,18 +8,23 @@ cat readme
 ```
 
 ## level 1
-ssh into bandit1 and open the file '-'
+ssh into bandit1 and open the file `-`
 ```bash
 $ cat ./-
 ```
 
 ## level 2
-ssh into bandit2 and open the file 'spaces in this filename'
+ssh into bandit2 and open the file `spaces in this filename`
 - tab complete the name from the command line, or escape the spaces
 ```bash
 $ cat spaces\ in\ this\ filename
 ```
 
 ## level 3
+ssh into bandit3 and open the `.hidden` file in the inhere directory
+```bash
+$ cat .hidden
+```
+
 
 ## level

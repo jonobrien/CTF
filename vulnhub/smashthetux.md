@@ -21,5 +21,14 @@ SHELLCODE += '\xeb\x13\x59\x31\xc0\xb0\x04\x31\xdb\x43\x31\xd2\xb2\x0f\xcd\x80\x
 
 0x01
 - privilege escalation
+- theres a race conditions for uid and accessing the file, so we will override the memory via gdb as user and show it works
 
+objdump at stat, first add, change argv to be ".readthis"
+
+bp call to fgets
+gdb > x/16s 0xbset {char [size]}
+`x/16s set {char[0x0a]} 0xbfffff8f5=".readthis"`
+
+
+{charset ".readthis"
 

